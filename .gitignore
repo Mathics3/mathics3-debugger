@@ -1,0 +1,11 @@
+*~
+/.hypothesis
+/.python-version
+/ChangeLog
+/Mathics3_graph.egg-info
+/build
+/dist
+/mathics_debugger.egg-info
+/pymathics_graph.egg-info
+/tmp
+__pycache__
