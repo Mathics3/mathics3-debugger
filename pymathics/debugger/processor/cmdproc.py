@@ -25,12 +25,17 @@ import sys
 import tempfile
 import traceback
 
+from typing import Tuple
+
 # Note: the module name pre 3.2 is repr
 from reprlib import Repr
 
 import pyficache
 from pygments.console import colorize
 from tracer import EVENT2SHORT
+
+from pymathics.debugger.tracing import call_event_debug
+
 
 import trepan.exception as Mexcept
 import trepan.lib.display as Mdisplay
@@ -39,7 +44,7 @@ import trepan.lib.stack as Mstack
 import trepan.lib.thred as Mthread
 import trepan.misc as Mmisc
 import trepan.processor.complete as Mcomplete
-from trepan.lib.bytecode import is_class_def, is_def_stmt
+from trepan.processor.cmdproc import get_stack
 from trepan.processor import cmdfns
 from trepan.processor.cmdfns import deparse_fn
 from trepan.vprocessor import Processor
@@ -80,7 +85,7 @@ def arg_split(s, posix=False):
     return args_list
 
 
-def get_stack(f, proc_obj=None):
+def get_mathics_stack(f, proc_obj=None) -> Tuple[list, int]:
     """Return a stack of frames which the debugger will use for in
     showing backtraces and in frame switching. As such various frame
     that are really around may be excluded unless we are debugging the
@@ -93,12 +98,12 @@ def get_stack(f, proc_obj=None):
     def fn_is_ignored(f):
         return proc_obj.core.ignore_filter.is_included(f)
 
+    # TODO filter frames
     stack = []
-    # FIXME: narrow this to Mathic3 frames.
-    # while f is not None:
-    #     stack.append((f, f.f_lineno))
-    #     f = f.f_back
-    #     pass
+    while f is not None:
+        stack.append((f, f.f_lineno))
+        f = f.f_back
+        pass
     stack.reverse()
     i = max(0, len(stack) - 1)
     return stack, i
@@ -389,6 +394,7 @@ class CommandProcessor(Processor):
         self.event2short = dict(EVENT2SHORT)
         self.event2short["signal"] = "?!"
         self.event2short["brkpt"] = "xx"
+        self.event2short["repl"] = "$ "
 
         self.optional_modules = tuple()
         self.cmd_instances = self._populate_commands()
@@ -554,14 +560,14 @@ class CommandProcessor(Processor):
         try:
             return eval(arg, self.curframe.f_globals, self.curframe.f_locals)
         except Exception:
-            t, v = sys.exc_info()[:2]
+            t, _ = sys.exc_info()[:2]
             if isinstance(t, str):
                 exc_type_name = t
                 pass
             else:
                 exc_type_name = t.__name__
             if show_error:
-                self.errmsg(str("%s: %s" % (exc_type_name, arg)))
+                self.errmsg(f"{exc_type_name}: {arg}")
             raise
         return None  # Not reached
 
@@ -894,7 +900,12 @@ class CommandProcessor(Processor):
         loop."""
         self.forget()
         if self.frame:
-            self.stack, self.curindex = get_stack(self.frame, self)
+
+            # Ignore some top frames
+            if self.frame.f_code == call_event_debug.__code__:
+                self.frame = self.frame.f_back.f_back.f_back
+
+            self.stack, self.curindex = get_stack(self.frame, None, None, self)
             if len(self.stack) > 0:
                 self.curframe = self.stack[self.curindex][0]
             else:
@@ -1063,7 +1074,7 @@ class CommandProcessor(Processor):
                 command_mod = importlib.import_module(import_name)
             except Exception:
                 if mod_name not in self.optional_modules:
-                    print("Error importing {mod_name}: {sys.exc_info()[0]}")
+                    print(f"Error importing {mod_name}: {sys.exc_info()[0]}")
                     pass
                 continue
 

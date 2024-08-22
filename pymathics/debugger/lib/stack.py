@@ -17,25 +17,15 @@
 """ Functions for working with Python frames"""
 
 import inspect
-import linecache
-import os
 import os.path as osp
-import re
-from reprlib import repr
-from typing import Optional
 
 from trepan.lib.format import (
     Arrow,
-    Filename,
-    Function,
-    LineNumber,
-    Return,
     format_token,
 )
-from trepan.lib.pp import pp
-from trepan.lib.printing import printf
-
-_with_local_varname = re.compile(r"_\[[0-9+]]")
+from trepan.lib.stack import format_stack_entry
+from mathics.core.builtin import Builtin
+from mathics.core.expression import Expression
 
 
 def count_frames(frame, count_start=0):
@@ -47,109 +37,33 @@ def count_frames(frame, count_start=0):
     return count
 
 
-_re_pseudo_file = re.compile(r"^<.+>")
+def print_expression_stack(proc_obj, n: int, color="plain"):
+    j = 0
+    intf = proc_obj.intf[-1]
+    for i in range(n):
+        frame, _ = proc_obj.stack[len(proc_obj.stack) - i - 1]
+        self_obj = frame.f_locals.get("self", None)
+        if isinstance(self_obj, Expression):
+            intf.msg(
+                "%d %s"
+                % (j, str(self_obj))
+                )
+            j += 1
+
+def print_mathics_stack(proc_obj, n: int, color="plain"):
+    j = 0
+    intf = proc_obj.intf[-1]
+    for i in range(n):
+        frame, _ = proc_obj.stack[len(proc_obj.stack) - i - 1]
+        self_obj = frame.f_locals.get("self", None)
+        if isinstance(self_obj, Builtin):
+            intf.msg(
+                f"{j} {frame.f_code.co_qualname} {self_obj.__class__}"
+                )
+            j += 1
 
 
-def format_stack_entry(
-    dbg_obj, frame_lineno, lprefix=": ", include_location=True, color="plain"
-):
-    """Format and return a stack entry gdb-style.
-    Note: lprefix is not used. It is kept for compatibility.
-    """
-    frame, lineno = frame_lineno
-    filename = frame2file(dbg_obj.core, frame)
-
-    s = ""
-    if frame.f_code.co_name:
-        funcname = frame.f_code.co_name
-    else:
-        funcname = "<lambda>"
-        pass
-    s = format_token(Function, funcname, highlight=color)
-
-    args, varargs, varkw, local_vars = inspect.getargvalues(frame)
-    if "<module>" == funcname and (
-        [],
-        None,
-        None,
-    ) == (
-        args,
-        varargs,
-        varkw,
-    ):
-        is_module = True
-        if is_exec_stmt(frame):
-            fn_name = format_token(Function, "exec", highlight=color)
-            source_text = deparse_source_from_code(frame.f_code)
-            s += f" {format_token(Function, fn_name, highlight=color)}({source_text})"
-        else:
-            fn_name = get_call_function_name(frame)
-            if fn_name:
-                source_text = deparse_source_from_code(frame.f_code)
-                if fn_name:
-                    s += f" {format_token(Function, fn_name, highlight=color)}({source_text})"
-            pass
-    else:
-        is_module = False
-        try:
-            params = inspect.formatargvalues(args, varargs, varkw, local_vars)
-        except Exception:
-            pass
-        else:
-            maxargstrsize = dbg_obj.settings["maxargstrsize"]
-            if len(params) >= maxargstrsize:
-                params = f"{params[0:maxargstrsize]}...)"
-                pass
-            s += params
-        pass
-
-    # Note: ddd can't handle wrapped stack entries (yet).
-    # The 35 is hoaky though. FIXME.
-    if len(s) >= 35:
-        s += "\n    "
-
-    if "__return__" in frame.f_locals:
-        rv = frame.f_locals["__return__"]
-        s += "->"
-        s += format_token(Return, repr(rv), highlight=color)
-        pass
-
-    if include_location:
-        is_pseudo_file = _re_pseudo_file.match(filename)
-        add_quotes_around_file = not is_pseudo_file
-        if is_module:
-            if filename == "<string>":
-                s += " in exec"
-            elif not is_exec_stmt(frame) and not is_pseudo_file:
-                s += " file"
-        elif s == "?()":
-            if is_exec_stmt(frame):
-                s = "in exec"
-                # exec_str = get_exec_string(frame.f_back)
-                # if exec_str != None:
-                #     filename = exec_str
-                #     add_quotes_around_file = False
-                #     pass
-                # pass
-            elif not is_pseudo_file:
-                s = "in file"
-                pass
-            pass
-        elif not is_pseudo_file:
-            s += " called from file"
-            pass
-
-        if add_quotes_around_file:
-            filename = f"'{filename}'"
-        s += " %s at line %s" % (
-            format_token(Filename, filename, highlight=color),
-            format_token(LineNumber, "%r" % lineno, highlight=color),
-        )
-    return s
-
-
-def print_stack_entry(proc_obj, i_stack, color="plain", opts={}):
-    from trepan.api import debug; debug()
+def print_stack_entry(proc_obj, i_stack: int, color="plain", opts={}):
     frame_lineno = proc_obj.stack[len(proc_obj.stack) - i_stack - 1]
     frame, lineno = frame_lineno
     intf = proc_obj.intf[-1]
@@ -170,8 +84,13 @@ def print_stack_trace(proc_obj, count=None, color="plain", opts={}):
     else:
         n = min(len(proc_obj.stack), count)
     try:
-        for i in range(n):
-            print_stack_entry(proc_obj, i, color=color, opts=opts)
+        if opts["mathics"]:
+            print_mathics_stack(proc_obj, n, color=color)
+        elif opts["expression"]:
+            print_expression_stack(proc_obj, n, color=color)
+        else:
+            for i in range(n):
+                print_stack_entry(proc_obj, i, color=color, opts=opts)
     except KeyboardInterrupt:
         pass
     return
@@ -253,11 +172,9 @@ if __name__ == "__main__":
         pass
 
     frame = inspect.currentframe()
-    print(frame2filesize(frame))
     pyc_file = osp.join(
         osp.dirname(__file__), "__pycache__", osp.basename(__file__)[:-3] + ".pyc"
     )
-    print(pyc_file, getsourcefile(pyc_file))
 
     # m = MockDebugger()
     # print(format_stack_entry(m, (frame, 10,)))

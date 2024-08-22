@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#   Copyright (C) 2008-2009, 2013, 2015-2015 Rocky Bernstein <rocky@gnu.org>
+#   Copyright (C) 2024 Rocky Bernstein <rocky@gnu.org>
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -17,58 +17,15 @@
 import inspect
 
 # Our local modules
-from trepan.processor.command import base_subcmd as Mbase_subcmd
+from trepan.processor.command.info_subcmd.args import InfoArgs as TrepanInfoArgs
 
 
-class InfoArgs(Mbase_subcmd.DebuggerSubcommand):
-    """**info args**
-
-    Show parameters of the current stack frame.
-
-    See also:
-    ---------
-    `info locals`, `info globals`, `info frame`"""
-
-    min_abbrev = 1
-    need_stack = True
-    short_help = "Argument variables of the current stack frame"
-
-    def run(self, args):
-        if not self.proc.curframe:
-            self.errmsg("No stack.")
-            return False
-        f = self.proc.curframe
-        co = f.f_code
-        # Break out display into args, varargs, keywords, and locals ?
-        # args, varargs, varkw, f_locals = getargvalues(f)
-        d = f.f_locals
-        n = co.co_argcount
-        if co.co_flags & inspect.CO_VARARGS:
-            n += 1
-        if co.co_flags & inspect.CO_VARKEYWORDS:
-            n += 1
-
-        if n == 0:
-            self.msg("no parameters")
-        else:
-            self.section("Argument parameters")
-            for i in range(n):
-                name = co.co_varnames[i]
-                self.msg_nocr("%d: %s = " % (i + 1, name))
-                if name in d:
-                    self.msg(str(d[name]))
-                else:
-                    self.ermsg("undefined")
-                    pass
-                pass
-            pass
-        return False
-
+class InfoArgs(TrepanInfoArgs):
     pass
 
 
 if __name__ == "__main__":
-    from trepan.processor.command import mock, info as Minfo
+    from pymathics.debugger.processor.command import mock, info as Minfo
 
     d, cp = mock.dbg_setup()
     i = Minfo.InfoCommand(cp)

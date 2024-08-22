@@ -33,16 +33,17 @@ from typing import Any
 
 # External packages
 import pyficache
-import tracer
 import tracefilter
-
+import tracer
 import trepan
 import trepan.clifns as Mclifns
+from mathics.eval.tracing import run_mpmath_traced, run_sympy_traced
 
 # Our local modules
 from trepan.lib import default
 from trepan.lib.stack import count_frames
 from trepan.misc import option_set
+
 from pymathics.debugger.processor.cmdproc import CommandProcessor
 
 
@@ -54,8 +55,15 @@ class DebuggerCore:
         # A negative number indicates no eventual stopping.
         "step_ignore": 0,
         "ignore_filter": tracefilter.TraceFilter(
-            [tracer.start, tracer.stop])
-        }
+            [
+                tracer.start,
+                tracer.stop,
+                # call_event_debug,
+                run_mpmath_traced,
+                run_sympy_traced,
+            ]
+        ),
+    }
 
     def __init__(self, debugger, opts=None):
         """Create a debugger object. But depending on the value of
@@ -390,16 +398,6 @@ class DebuggerCore:
             self.step_ignore -= 1
             pass
         return False
-
-    def set_next(self, frame, step_ignore=0, step_events=None):
-        "Sets to stop on the next event that happens in frame 'frame'."
-        self.step_events = None  # Consider all events
-        self.stop_level = count_frames(frame)
-        self.last_level = self.stop_level
-        self.last_frame = frame
-        self.stop_on_finish = False
-        self.step_ignore = step_ignore
-        return
 
     def trace_dispatch(self, frame, event, arg):
         """A trace event occurred. Filter or pass the information to a
