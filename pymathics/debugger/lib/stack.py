@@ -37,44 +37,62 @@ def count_frames(frame, count_start=0):
     return count
 
 
-def print_expression_stack(proc_obj, n: int, color="plain"):
+def print_expression_stack(proc_obj, count: int, color="plain"):
+    """
+    Display the Python call stack but filtered so that we show only expresions.
+    """
     j = 0
     intf = proc_obj.intf[-1]
+    n = len(proc_obj.stack)
     for i in range(n):
         frame, _ = proc_obj.stack[len(proc_obj.stack) - i - 1]
         self_obj = frame.f_locals.get("self", None)
         if isinstance(self_obj, Expression):
+            if frame is proc_obj.curframe:
+                intf.msg_nocr(format_token(Arrow, "E>", highlight=color))
+            else:
+                intf.msg_nocr("E#")
             intf.msg(
-                "%d %s"
-                % (j, str(self_obj))
+                f"{j} ({i}) {frame.f_code.co_qualname} {self_obj.__class__}"
                 )
             j += 1
+            if j >= count:
+                break
 
-def print_mathics_stack(proc_obj, n: int, color="plain"):
+def print_mathics_stack(proc_obj, count: int, color="plain"):
+    """
+    Display the Python call stack but filtered so that we Builtin calls.
+    """
     j = 0
     intf = proc_obj.intf[-1]
+    n = len(proc_obj.stack)
     for i in range(n):
         frame, _ = proc_obj.stack[len(proc_obj.stack) - i - 1]
         self_obj = frame.f_locals.get("self", None)
         if isinstance(self_obj, Builtin):
+            if frame is proc_obj.curframe:
+                intf.msg_nocr(format_token(Arrow, "M>", highlight=color))
+            else:
+                intf.msg_nocr("M#")
             intf.msg(
-                f"{j} {frame.f_code.co_qualname} {self_obj.__class__}"
+                f"{j} ({i}) {frame.f_code.co_qualname} {self_obj.__class__}"
                 )
             j += 1
+            if j >= count:
+                break
 
 
 def print_stack_entry(proc_obj, i_stack: int, color="plain", opts={}):
     frame_lineno = proc_obj.stack[len(proc_obj.stack) - i_stack - 1]
-    frame, lineno = frame_lineno
+    frame, _ = frame_lineno
     intf = proc_obj.intf[-1]
     if frame is proc_obj.curframe:
         intf.msg_nocr(format_token(Arrow, "->", highlight=color))
     else:
         intf.msg_nocr("##")
     intf.msg(
-        "%d %s"
-        % (i_stack, format_stack_entry(proc_obj.debugger, frame_lineno, color=color))
-    )
+        f"{i_stack} {format_stack_entry(proc_obj.debugger, frame_lineno, color=color)}"
+        )
 
 
 def print_stack_trace(proc_obj, count=None, color="plain", opts={}):

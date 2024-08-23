@@ -906,7 +906,7 @@ class CommandProcessor(Processor):
             # Ignore some top frames.
             if self.frame.f_code == call_event_debug.__code__:
                 # E
-                self.frame = self.frame.f_back.f_back
+                self.frame = self.frame.f_back.f_back.f_back
 
             self.stack, self.curindex = get_stack(self.frame, None, None, self)
             if len(self.stack) > 0:

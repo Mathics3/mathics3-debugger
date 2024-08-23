@@ -16,6 +16,7 @@
 
 # Our local modules
 from trepan.processor.command.base_subcmd import DebuggerSubcommand
+from pymathics.debugger.lib.stack import print_stack_trace
 
 
 class InfoProgram(DebuggerSubcommand):
@@ -27,7 +28,7 @@ class InfoProgram(DebuggerSubcommand):
 
     * Reason the program is stopped.
 
-"""
+    """
 
     min_abbrev = 2  # Need at least "info pr"
     max_args = 0
@@ -40,6 +41,18 @@ class InfoProgram(DebuggerSubcommand):
         if proc.event:
             msg = f"Mathics3 stop via a '{proc.event}' event."
             self.msg(msg)
+        print_stack_trace(
+            self.proc,
+            1,
+            color=self.settings["highlight"],
+            opts={"expression": True, "mathics": False},
+        )
+        print_stack_trace(
+            self.proc,
+            1,
+            color=self.settings["highlight"],
+            opts={"expression": True, "mathics": True},
+        )
         return
 
 
