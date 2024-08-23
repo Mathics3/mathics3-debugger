@@ -57,7 +57,7 @@ class DebugREPL:
         self.thread = None
         self.eval_string = None
         self.settings = DEBUGGER_SETTINGS.copy()
-        self.settings["events"] = {"repl"}
+        self.settings["events"] = {"repl", "mpmath", "SymPy"}
 
         def get_option(key: str) -> Any:
             return option_set(opts, key, DEBUGGER_SETTINGS)

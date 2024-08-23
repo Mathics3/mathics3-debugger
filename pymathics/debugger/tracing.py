@@ -18,6 +18,8 @@ def call_event_debug(event: tracing.TraceEvent, fn: Callable, *args) -> bool:
         from pymathics.debugger.repl import DebugREPL
         dbg = DebugREPL()
     current_frame = inspect.currentframe()
-    dbg.core.trace_dispatch(current_frame, "repl", args)
+    # Remove "Tracing."
+    event_str = str(event).split(".")[-1]
+    dbg.core.trace_dispatch(current_frame, event_str, args)
 
     return False

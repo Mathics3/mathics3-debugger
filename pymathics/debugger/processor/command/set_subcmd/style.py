@@ -1,58 +1,23 @@
 # -*- coding: utf-8 -*-
-#   Copyright (C) 2015, 2017-2018, 2020, 2024 Rocky Bernstein
+#   Copyright (C) 2024 Rocky Bernstein
 #
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pygments.styles import STYLE_MAP
-from trepan.lib.complete import complete_token
-from trepan.processor.command.base_subcmd import DebuggerSubcommand
+from trepan.processor.command.set_subcmd.style import SetStyle as TrepanSetStyle
 
-style_names = sorted(list(STYLE_MAP.keys()))
-
-
-class SetStyle(DebuggerSubcommand):
-    """**set style** [*pygments-style*]
-
-    Set the pygments style in to use in formatting text for a 256-color terminal.
-    Note: if your terminal doesn't support 256 colors, you may be better off
-    using `--highlight=plain` or `--highlight=dark` instead. To turn off styles
-    use `set style none`.
-
-    To list the available pygments styles inside the debugger, omit the style name.
-
-    Examples:
-    ---------
-
-        set style            # give a list of the style names
-        set style colorful   # Pygments 'colorful' style
-        set style none       # Turn off style, still use highlight though
-
-    See also:
-    --------
-
-    `show style`, `set highlight`"""
-
-    def complete(self, prefix):
-        return complete_token(style_names, prefix)
-
-    in_list = True
-    min_abbrev = len("sty")
-    short_help = "Set the pygments style"
-
-    def run(self, args):
-        if len(args) == 0:
-            return self.proc.commands["show"].cmds.subcmds["styles"].run([])
-        if args[0] == "none":
-            self.debugger.settings[self.name] = None
-            return
-
-        if args[0] not in style_names:
-            self.errmsg(f"style name '{args[0]}' not valid. valid names are: ")
-            self.msg(self.columnize_commands(style_names))
-            return
-
-        self.debugger.settings[self.name] = args[0]
-        return
-
+class SetStyle(TrepanSetStyle):
+    __doc__ = TrepanSetStyle.__doc__
     pass
 
 

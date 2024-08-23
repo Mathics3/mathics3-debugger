@@ -21,6 +21,7 @@ from trepan.processor.command.info_subcmd.args import InfoArgs as TrepanInfoArgs
 
 
 class InfoArgs(TrepanInfoArgs):
+    __doc__ = TrepanInfoArgs.__doc__
     pass
 
 

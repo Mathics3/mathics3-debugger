@@ -395,6 +395,8 @@ class CommandProcessor(Processor):
         self.event2short["signal"] = "?!"
         self.event2short["brkpt"] = "xx"
         self.event2short["repl"] = "$ "
+        self.event2short["mpmath"] = "mp"
+        self.event2short["SymPy"] = "SP"
 
         self.optional_modules = tuple()
         self.cmd_instances = self._populate_commands()
