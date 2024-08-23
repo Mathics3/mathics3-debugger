@@ -35,7 +35,6 @@ from typing import Any
 import pyficache
 import tracefilter
 import tracer
-import trepan
 import trepan.clifns as Mclifns
 from mathics.eval.tracing import run_mpmath_traced, run_sympy_traced
 

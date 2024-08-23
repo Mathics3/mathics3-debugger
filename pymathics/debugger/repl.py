@@ -57,7 +57,11 @@ class DebugREPL:
         self.thread = None
         self.eval_string = None
         self.settings = DEBUGGER_SETTINGS.copy()
-        self.settings["events"] = {"repl", "mpmath", "SymPy"}
+        self.settings["events"] = {
+            "debugger",  # explicit call via "Debugger"
+            "mpmath",  # mpmath call
+            "SymPy"  # SymPy call
+            }
 
         def get_option(key: str) -> Any:
             return option_set(opts, key, DEBUGGER_SETTINGS)
@@ -74,7 +78,7 @@ class DebugREPL:
         # be set before calling DebuggerCore.
         interface_opts = {
             "complete": completer,
-            "debugger_name": "Mathics3Debug",
+            "debugger_name": "Mathics3 Debug",
         }
 
         interface = UserInterface(
@@ -125,5 +129,5 @@ if __name__ == "__main__":
     print(d.settings)
     import inspect
     current_frame = inspect.currentframe()
-    d.core.trace_dispatch(current_frame, "repl", [])
+    d.core.trace_dispatch(current_frame, "debugger", [])
     pass

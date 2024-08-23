@@ -24,7 +24,7 @@ class DebugActivate(Builtin):
     """
 
     options = EVENT_OPTIONS
-    summary_text = """set events to got into Mathics3 Debugger REPL"""
+    summary_text = """set events to go into the Mathics3 Debugger REPL"""
 
     # The function below should start with "eval"
     def eval(self, evaluation: Evaluation, options: dict):
@@ -43,7 +43,24 @@ class DebugActivate(Builtin):
                 tracing.run_sympy = (
                     tracing.run_sympy_traced if event_is_traced else tracing.run_fast
                 )
-        print("Debugger called")
+
+
+class Debugger(Builtin):
+    """
+    <dl>
+      <dt>'Debugger'[]
+      <dd>enter debugger entry on certain event
+    </dl>
+
+    #> Debugger[]
+     = ...
+    """
+
+    summary_text = """get into Mathics3 Debugger REPL"""
+
+    def eval(self, evaluation: Evaluation):
+        "Debugger[]"
+        call_event_debug(tracing.TraceEvent.debugger, Debugger.eval, evaluation)
 
 
 class TraceActivate(Builtin):
@@ -60,7 +77,6 @@ class TraceActivate(Builtin):
     options = EVENT_OPTIONS
     summary_text = """Set/unset tracing and debugging"""
 
-    # The function below should start with "eval"
     def eval(self, evaluation: Evaluation, options: dict):
         "TraceActivate[OptionsPattern[TraceActivate]]"
         # adjust_event_handlers(self, evaluation, options)

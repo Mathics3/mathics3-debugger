@@ -394,7 +394,7 @@ class CommandProcessor(Processor):
         self.event2short = dict(EVENT2SHORT)
         self.event2short["signal"] = "?!"
         self.event2short["brkpt"] = "xx"
-        self.event2short["repl"] = "$ "
+        self.event2short["debugger"] = "$ "
         self.event2short["mpmath"] = "mp"
         self.event2short["SymPy"] = "SP"
 
@@ -491,7 +491,7 @@ class CommandProcessor(Processor):
             pass
         return filename
 
-    def set_prompt(self, prompt="Mathics3"):
+    def set_prompt(self, prompt="Mathics3 Debug"):
         if self.thread_name and self.thread_name != "MainThread":
             prompt += ":" + self.thread_name
             pass
@@ -505,7 +505,7 @@ class CommandProcessor(Processor):
             self.prompt_str = colorize("underline", self.prompt_str)
         self.prompt_str += " "
 
-    def event_processor(self, frame, event, event_arg, prompt="Mathics3"):
+    def event_processor(self, frame, event, event_arg, prompt="Mathics3 Debug"):
         """
         command event processor: reading a commands do something with them.
 
@@ -903,9 +903,10 @@ class CommandProcessor(Processor):
         self.forget()
         if self.frame:
 
-            # Ignore some top frames
+            # Ignore some top frames.
             if self.frame.f_code == call_event_debug.__code__:
-                self.frame = self.frame.f_back.f_back.f_back
+                # E
+                self.frame = self.frame.f_back.f_back
 
             self.stack, self.curindex = get_stack(self.frame, None, None, self)
             if len(self.stack) > 0:

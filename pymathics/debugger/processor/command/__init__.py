@@ -29,9 +29,12 @@ __py_files__ = glob.glob(osp.join(__command_dir__, "[a-z]*.py"))
 # files in exclude_files and that becomes the list of modules that
 # commands.py will use to import
 exclude_files = ["mock.py"]
+__modules__ = []
+
 __modules__ = [
     osp.basename(filename[0:-3])
     for filename in __py_files__
-    if osp.basename(filename) not in exclude_files
+    if filename is not None and osp.basename(filename) not in exclude_files
 ]
+
 __all__ = __modules__ + exclude_files
