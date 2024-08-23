@@ -39,7 +39,8 @@ import trepan.clifns as Mclifns
 from mathics.eval.tracing import run_mpmath_traced, run_sympy_traced
 
 # Our local modules
-from trepan.lib import default
+from trepan.lib.breakpoint import BreakpointManager
+from trepan.lib.default import START_OPTS, STOP_OPTS
 from trepan.lib.stack import count_frames
 from trepan.misc import option_set
 
@@ -75,8 +76,8 @@ class DebuggerCore:
         def get_option(key: str) -> Any:
             return option_set(opts, key, self.DEFAULT_INIT_OPTS)
 
-        # self.bpmgr = breakpoint.BreakpointManager()
-        # self.current_bp = None
+        self.bpmgr = BreakpointManager()
+        self.current_bp = None
         self.debugger = debugger
 
         # Threading lock ensures that we don't have other traced threads
@@ -238,7 +239,7 @@ class DebuggerCore:
             self.trace_hook_suspend = True
 
             def get_option(key: str) -> Any:
-                return option_set(opts, key, default.START_OPTS)
+                return option_set(opts, key, START_OPTS)
 
             add_hook_opts = get_option("add_hook_opts")
 
@@ -246,7 +247,7 @@ class DebuggerCore:
             if not tracer.is_started() or get_option("force"):
                 # FIXME: should filter out opts not for tracer
 
-                tracer_start_opts = default.START_OPTS.copy()
+                tracer_start_opts = START_OPTS.copy()
                 if opts:
                     tracer_start_opts.update(opts.get("tracer_start", {}))
                 tracer_start_opts["trace_fn"] = self.trace_dispatch
@@ -267,7 +268,7 @@ class DebuggerCore:
             self.trace_hook_suspend = True
 
             def get_option(key: str) -> Any:
-                return option_set(options, key, default.STOP_OPTS)
+                return option_set(options, key, STOP_OPTS)
 
             args = [self.trace_dispatch]
             remove = get_option("remove")
