@@ -1,45 +1,30 @@
 # -*- coding: utf-8 -*-
 #   Copyright (C) 2024 Rocky Bernstein
 #
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pygments.styles import STYLE_MAP
+from trepan.processor.command.show_subcmd.styles import ShowStyles as TrepanShowStyles
 
-# Our local modules
-from trepan.processor.command.base_subcmd import DebuggerSubcommand
-
-style_names = sorted(list(STYLE_MAP.keys()))
-
-
-class ShowStyles(DebuggerSubcommand):
-    """**show styles**
-
-    Give a list of all pygments style available in formatting 256-color terminal text.
-
-    See also:
-    ---------
-
-    `show style`, `set style`, `show highlight`"""
-
-    in_list = True
-    short_help = "Show all pygments style available"
-    min_abbrev = len("styles")
-
-    def run(self, args):
-        if len(args) != 0:
-            self.errmsg("Expecting no args")
-            return
-
-        self.section("style names: ")
-        self.msg(self.columnize_commands(style_names))
-        return
-
+class ShowStyles(TrepanShowStyles):
+    __doc__ = TrepanShowStyles.__doc__
     pass
 
 
 if __name__ == "__main__":
     from trepan.processor.command.set_subcmd import __demo_helper__ as Mhelper
 
-    sub = Mhelper.demo_run(ShowStyle, [])
+    sub = Mhelper.demo_run(ShowStyles, [])
     d = sub.proc.debugger
     sub.run(["show"])
     pass

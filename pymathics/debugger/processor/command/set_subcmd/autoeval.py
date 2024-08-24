@@ -14,17 +14,15 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from trepan.processor.command.show_subcmd.style import ShowStyle as TrepanShowStyle
+from trepan.processor.command.set_subcmd.autoeval import SetAutoEval as TrepanSetAutoEval
 
-class ShowStyle(TrepanShowStyle):
-    __doc__ = TrepanShowStyle.__doc__
+class SetAutoEval(TrepanSetAutoEval):
+    __doc__ = TrepanSetAutoEval.__doc__
     pass
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     from trepan.processor.command.set_subcmd import __demo_helper__ as Mhelper
 
-    sub = Mhelper.demo_run(ShowStyle, [])
-    d = sub.proc.debugger
-    sub.run(["show"])
+    Mhelper.demo_run(SetAutoEval)
     pass
