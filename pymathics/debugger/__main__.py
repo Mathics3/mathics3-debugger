@@ -31,17 +31,17 @@ class DebugActivate(Builtin):
         "DebugActivate[OptionsPattern[DebugActivate]]"
         for event_name in tracing.TraceEventNames:
             option = self.get_option(options, event_name, evaluation)
-            event_is_traced = option == SymbolTrue
-            if event_is_traced:
+            event_is_debugged = option == SymbolTrue
+            if event_is_debugged:
                 tracing.hook_entry_fn = call_event_debug
                 tracing.hook_exit_fn = tracing.return_event_print
             if event_name == "mpmath":
                 tracing.run_mpmath = (
-                    tracing.run_mpmath_traced if event_is_traced else tracing.run_fast
+                    tracing.run_mpmath_traced if event_is_debugged else tracing.run_fast
                 )
             elif event_name == "SymPy":
                 tracing.run_sympy = (
-                    tracing.run_sympy_traced if event_is_traced else tracing.run_fast
+                    tracing.run_sympy_traced if event_is_debugged else tracing.run_fast
                 )
 
 
