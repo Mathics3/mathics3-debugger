@@ -55,7 +55,7 @@ def print_expression_stack(proc_obj, count: int, color="plain"):
                 intf.msg_nocr("E#")
             stack_nums = f"{j} ({i}"
             intf.msg(
-                f"{j} ({i}) {frame.f_code.co_qualname} {self_obj.__class__}"
+                f"{stack_nums} {frame.f_code.co_qualname} {self_obj.__class__}"
                 )
             intf.msg(" " * (4 + len(stack_nums)) +
                      format_stack_entry(proc_obj.debugger, frame_lineno, color=color))
@@ -63,7 +63,7 @@ def print_expression_stack(proc_obj, count: int, color="plain"):
             if j >= count:
                 break
 
-def print_mathics_stack(proc_obj, count: int, color="plain"):
+def print_builtin_stack(proc_obj, count: int, color="plain"):
     """
     Display the Python call stack but filtered so that we Builtin calls.
     """
@@ -71,16 +71,20 @@ def print_mathics_stack(proc_obj, count: int, color="plain"):
     intf = proc_obj.intf[-1]
     n = len(proc_obj.stack)
     for i in range(n):
-        frame, _ = proc_obj.stack[len(proc_obj.stack) - i - 1]
+        frame_lineno = proc_obj.stack[len(proc_obj.stack) - i - 1]
+        frame = frame_lineno[0]
         self_obj = frame.f_locals.get("self", None)
         if isinstance(self_obj, Builtin):
             if frame is proc_obj.curframe:
-                intf.msg_nocr(format_token(Arrow, "M>", highlight=color))
+                intf.msg_nocr(format_token(Arrow, "B>", highlight=color))
             else:
                 intf.msg_nocr("B#")
+            stack_nums = f"{j} ({i}"
             intf.msg(
-                f"{j} ({i}) {frame.f_code.co_qualname} {self_obj.__class__}"
+                f"{stack_nums}) {frame.f_code.co_qualname} {self_obj.__class__}"
                 )
+            intf.msg(" " * (4 + len(stack_nums)) +
+                     format_stack_entry(proc_obj.debugger, frame_lineno, color=color))
             j += 1
             if j >= count:
                 break
@@ -107,7 +111,7 @@ def print_stack_trace(proc_obj, count=None, color="plain", opts={}):
         n = min(len(proc_obj.stack), count)
     try:
         if opts["builtin"]:
-            print_mathics_stack(proc_obj, n, color=color)
+            print_builtin_stack(proc_obj, n, color=color)
         elif opts["expression"]:
             print_expression_stack(proc_obj, n, color=color)
         else:
