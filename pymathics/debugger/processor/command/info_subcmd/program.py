@@ -44,14 +44,14 @@ class InfoProgram(DebuggerSubcommand):
         print_stack_trace(
             self.proc,
             1,
-            color=self.settings["highlight"],
-            opts={"expression": True, "mathics": False},
+            color=self.settings["style"],
+            opts={"expression": True, "builtin": False},
         )
         print_stack_trace(
             self.proc,
             1,
-            color=self.settings["highlight"],
-            opts={"expression": True, "mathics": True},
+            color=self.settings["style"],
+            opts={"expression": True, "builtin": True},
         )
         return
 
