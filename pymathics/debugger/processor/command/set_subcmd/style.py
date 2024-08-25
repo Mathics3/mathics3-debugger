@@ -14,7 +14,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from trepan.processor.command.set_subcmd.autoeval import SetStyle as TrepanSetStyle
+from trepan.processor.command.set_subcmd.style import SetStyle as TrepanSetStyle
 
 class SetStyle(TrepanSetStyle):
     __doc__ = TrepanSetStyle.__doc__

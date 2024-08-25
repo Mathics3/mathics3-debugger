@@ -45,16 +45,20 @@ def print_expression_stack(proc_obj, count: int, color="plain"):
     intf = proc_obj.intf[-1]
     n = len(proc_obj.stack)
     for i in range(n):
-        frame, _ = proc_obj.stack[len(proc_obj.stack) - i - 1]
+        frame_lineno = proc_obj.stack[len(proc_obj.stack) - i - 1]
+        frame = frame_lineno[0]
         self_obj = frame.f_locals.get("self", None)
         if isinstance(self_obj, Expression):
             if frame is proc_obj.curframe:
                 intf.msg_nocr(format_token(Arrow, "E>", highlight=color))
             else:
                 intf.msg_nocr("E#")
+            stack_nums = f"{j} ({i}"
             intf.msg(
                 f"{j} ({i}) {frame.f_code.co_qualname} {self_obj.__class__}"
                 )
+            intf.msg(" " * (4 + len(stack_nums)) +
+                     format_stack_entry(proc_obj.debugger, frame_lineno, color=color))
             j += 1
             if j >= count:
                 break
@@ -73,7 +77,7 @@ def print_mathics_stack(proc_obj, count: int, color="plain"):
             if frame is proc_obj.curframe:
                 intf.msg_nocr(format_token(Arrow, "M>", highlight=color))
             else:
-                intf.msg_nocr("M#")
+                intf.msg_nocr("B#")
             intf.msg(
                 f"{j} ({i}) {frame.f_code.co_qualname} {self_obj.__class__}"
                 )
@@ -102,7 +106,7 @@ def print_stack_trace(proc_obj, count=None, color="plain", opts={}):
     else:
         n = min(len(proc_obj.stack), count)
     try:
-        if opts["mathics"]:
+        if opts["builtin"]:
             print_mathics_stack(proc_obj, n, color=color)
         elif opts["expression"]:
             print_expression_stack(proc_obj, n, color=color)
@@ -194,8 +198,8 @@ if __name__ == "__main__":
         osp.dirname(__file__), "__pycache__", osp.basename(__file__)[:-3] + ".pyc"
     )
 
-    # m = MockDebugger()
-    # print(format_stack_entry(m, (frame, 10,)))
+    m = MockDebugger()
+    print(format_stack_entry(m, (frame, 10,)))
     # print(format_stack_entry(m, (frame, 10,), color="dark"))
     # print("frame count: %d" % count_frames(frame))
     # print("frame count: %d" % count_frames(frame.f_back))

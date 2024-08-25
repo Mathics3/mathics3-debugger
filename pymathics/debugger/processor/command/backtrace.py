@@ -35,7 +35,7 @@ class BacktraceCommand(DebuggerCommand):
     *options* are:
 
        -h | --help    - give this help
-       -m | --mathics - show Mathics3 evaluation methods
+       -b | --builtin - show Mathics3 builtin methods
        -e | --expr    - show Mathics3 Expressions
 
     Examples:
@@ -54,7 +54,7 @@ class BacktraceCommand(DebuggerCommand):
     def run(self, args):
 
         try:
-            opts, args = getopt(args[1:], "hme", "help".split())
+            opts, args = getopt(args[1:], "hbe", "help".split())
         except GetoptError as err:
             # print help information and exit:
             print(str(err))  # will print something like "option -a not recognized"
@@ -62,19 +62,21 @@ class BacktraceCommand(DebuggerCommand):
 
         bt_opts = {
             "width": self.settings["width"],
-            "mathics": False,
+            "builtin": False,
             "expression": False
         }
+        # FIXME should convert opts -e and -b to Enum type and
+        # check that it isn't set twice.
         for o, _ in opts:
             if o in ("-h", "--help"):
                 self.proc.commands["help"].run(["help", "backtrace"])
                 return
-            elif o in ("-m", "--mathics"):
-                bt_opts["mathics"] = True
+            elif o in ("-b", "--builtin"):
+                bt_opts["builtin"] = True
             elif o in ("-e", "--expression"):
                 bt_opts["expression"] = True
             else:
-                self.errmsg("unhandled option '%s'" % o)
+                self.errmsg(f"unhandled option '{o}'")
             pass
 
         if len(args) > 0:
@@ -105,7 +107,7 @@ class BacktraceCommand(DebuggerCommand):
             self.errmsg("No stack.")
             return False
         print_stack_trace(
-            self.proc, count, color=self.settings["highlight"], opts=bt_opts
+            self.proc, count, color=self.settings["style"], opts=bt_opts
         )
         return False
 
