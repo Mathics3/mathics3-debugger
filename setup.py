@@ -33,6 +33,7 @@ setup(
     packages=find_namespace_packages(include=["pymathics.*"]),
     install_requires=[
         "Mathics3>=7.0.0.dev0",
+        "trepan3k>=1.2.12.0.dev",
     ],
     # don't pack Mathics in egg because of media files, etc.
     zip_safe=False,
