@@ -1,3 +1,10 @@
+"""
+Mathics3 Debugger Builtin Functions
+
+These functions allow you to set events for entering the debugger when \
+an event is triggered, or enter the debugger immediately.
+"""
+
 import mathics.eval.tracing as tracing
 from mathics.core.builtin import Builtin
 from mathics.core.evaluation import Evaluation
@@ -20,7 +27,7 @@ class DebugActivate(Builtin):
     </dl>
 
     >> DebugActivate[SymPy -> True]
-     =
+     = ...
     """
 
     options = EVENT_OPTIONS
@@ -52,7 +59,7 @@ class Debugger(Builtin):
       <dd>enter debugger entry on certain event
     </dl>
 
-    #> Debugger[]
+    X> Debugger[]
      = ...
     """
 
@@ -71,7 +78,7 @@ class TraceActivate(Builtin):
     </dl>
 
     >> TraceActivate[SymPy -> True]
-     =
+     = ...
     """
 
     options = EVENT_OPTIONS

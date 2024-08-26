@@ -15,7 +15,7 @@ def call_event_debug(event: tracing.TraceEvent, fn: Callable, *args) -> bool:
     print(f"{event.name} call  : {name}{args[:3]}")
     global dbg
     if dbg is None:
-        from pymathics.debugger.repl import DebugREPL
+        from pymathics.debugger.lib.repl import DebugREPL
         dbg = DebugREPL()
 
     # Note: there may be a temptation to go back a frame, i.e. use

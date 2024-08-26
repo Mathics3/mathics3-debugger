@@ -116,7 +116,7 @@ class BacktraceCommand(DebuggerCommand):
 
 if __name__ == "__main__":
     from pymathics.debugger.processor import cmdproc
-    from pymathics.debugger.repl import DebugREPL
+    from pymathics.debugger.lib.repl import DebugREPL
 
     d = DebugREPL()
     cp = d.core.processor

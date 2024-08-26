@@ -263,7 +263,7 @@ Type `help` followed by command name for full documentation.
 
 if __name__ == "__main__":
     # Demo it.
-    from pymathics.debugger.repl import DebugREPL
+    from pymathics.debugger.lib.repl import DebugREPL
     d = DebugREPL()
     cp = d.core.processor
 

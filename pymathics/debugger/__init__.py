@@ -4,7 +4,7 @@ Mathics3 Debugger
 In this Mathics3 module, we have a command-line debugger for Mathics3. With it, you can inspect Mathic3 objects \
 at both the Mathics3 and Python level.
 
-This debugger is based on the <i>trepan</i> series of debuggers, <url>:trepan3k:https://pypi.org/project/trepan3k/</url> \
+This debugger is based on the gdb-like <i>trepan</i> series of debuggers, <url>:trepan3k:https://pypi.org/project/trepan3k/</url> \
 in particular.
 """
 

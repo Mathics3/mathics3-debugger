@@ -128,7 +128,7 @@ Use dbgr(*string*) to issue debugger command: *string*"""
 
 
 if __name__ == "__main__":
-    from pymathics.debugger.repl import DebugREPL
+    from pymathics.debugger.lib.repl import DebugREPL
 
     d = DebugREPL()
     command = PythonCommand(d.core.processor)

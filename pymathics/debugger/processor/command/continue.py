@@ -51,7 +51,7 @@ class ContinueCommand(DebuggerCommand):
 
 if __name__ == "__main__":
     import sys
-    from pymathics.debugger.repl import DebugREPL
+    from pymathics.debugger.lib.repl import DebugREPL
 
     d = DebugREPL()
     cmd = ContinueCommand(d.core.processor)
