@@ -27,6 +27,7 @@ def call_event_debug(event: tracing.TraceEvent, fn: Callable, *args) -> bool:
 
     # Remove any "Tracing." from event string.
     event_str = str(event).split(".")[-1]
+    dbg.core.execution_status = "Running"
     dbg.core.trace_dispatch(current_frame, event_str, args)
 
     return False
