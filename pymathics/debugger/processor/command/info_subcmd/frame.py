@@ -70,10 +70,10 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
             self.errmsg("No frame selected.")
             return False
 
-        show_lists = False
+        is_verbose = False
         if len(args) >= 1 and args[0] == "-v":
             args.pop(0)
-            show_lists = True
+            is_verbose = True
 
         frame_num = None
         if len(args) == 1:
@@ -113,13 +113,16 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
         self.section(mess)
         if hasattr(frame, "f_restricted"):
             self.msg("  restricted execution: %s" % frame.f_restricted)
-        self.msg("  current line number: %d" % frame.f_lineno)
-        self.msg("  last instruction: %d" % frame.f_lasti)
-        self.msg("  code: %s" % frame.f_code)
+
+        if is_verbose:
+            self.msg("  current line number: %d" % frame.f_lineno)
+            self.msg("  last instruction: %d" % frame.f_lasti)
+            self.msg("  code: %s" % frame.f_code)
+
         self.msg("  previous frame: %s" % frame.f_back)
         self.msg("  tracing function: %s" % frame.f_trace)
 
-        if show_lists:
+        if is_verbose:
             for name, field in [
                 ("Globals", "f_globals"),
                 ("Builtins", "f_builtins"),
