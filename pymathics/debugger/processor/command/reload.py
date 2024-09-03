@@ -87,8 +87,11 @@ class ReloadCommand(DebuggerCommand):
 
             subcommand_module = importlib.import_module(subcmd.__module__)
             importlib.reload(subcommand_module)
+            # FIXME the set difference is to check that the classname smells like a subcommand
+            # put this test in a function
             classnames = [
-                tup[0] for tup in inspect.getmembers(subcommand_module, inspect.isclass)
+                tup[0] for tup in inspect.getmembers(subcommand_module, inspect.isclass) if
+                not {'need_stack', 'short_help', '__module__', 'max_args', 'run', '__doc__', 'min_abbrev'} - set(tup[1].__dict__.keys())
             ]
             if len(classnames) == 1:
                 try:

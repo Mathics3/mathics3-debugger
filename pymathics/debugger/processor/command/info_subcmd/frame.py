@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#   Copyright (C) 2015, 2023 Rocky Bernstein <rocky@gnu.org>
+#   Copyright (C) 2024 Rocky Bernstein <rocky@gnu.org>
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -20,6 +20,15 @@ import inspect
 from trepan.processor.command import base_subcmd as Mbase_subcmd
 from trepan.lib import complete as Mcomplete
 from trepan.processor import frame as Mframe
+
+from mathics.core.builtin import Builtin
+def is_builtin_eval_fn(frame) -> bool:
+    if not inspect.isframe(frame):
+        return False
+    if not frame.f_code.co_name.startswith("eval"):
+        return False
+    self_obj = frame.f_locals.get("self")
+    return  isinstance(self_obj, Builtin)
 
 
 class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
@@ -111,6 +120,16 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
             else "Frame Info"
         )
         self.section(mess)
+
+        if is_builtin_eval_fn(frame):
+            self_obj = frame.f_locals.get("self")
+            builtin_name = self_obj.__class__.__name__
+            self.msg(f"  Builtin: {builtin_name}[]")
+            eval_name = frame.f_code.co_name
+            docstring = getattr(self_obj, eval_name).__doc__
+            docstring = docstring.replace("%(name)s", builtin_name)
+            self.msg(f"  Match pattern: {docstring}")
+
         if hasattr(frame, "f_restricted"):
             self.msg("  restricted execution: %s" % frame.f_restricted)
 
