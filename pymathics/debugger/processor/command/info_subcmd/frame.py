@@ -18,17 +18,11 @@ import inspect
 
 # Our local modules
 from trepan.processor.command import base_subcmd as Mbase_subcmd
-from trepan.lib import complete as Mcomplete
+from trepan.lib.complete import complete_token
 from trepan.processor import frame as Mframe
+from pymathics.debugger.lib.stack import format_eval_builtin_fn
 
-from mathics.core.builtin import Builtin
-def is_builtin_eval_fn(frame) -> bool:
-    if not inspect.isframe(frame):
-        return False
-    if not frame.f_code.co_name.startswith("eval"):
-        return False
-    self_obj = frame.f_locals.get("self")
-    return  isinstance(self_obj, Builtin)
+from pymathics.debugger.lib.stack import is_builtin_eval_fn
 
 
 class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
@@ -59,7 +53,7 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
     `info locals`, `info globals`, `info args`"""
 
     min_abbrev = 2
-    max_args = 2
+    max_args = 3
     need_stack = True
     short_help = """Show detailed info about the current frame"""
 
@@ -68,7 +62,7 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
         low, high = Mframe.frame_low_high(proc_obj, None)
         ary = [str(low + i) for i in range(high - low + 1)]
         # FIXME: add in Thread names
-        return Mcomplete.complete_token(ary, prefix)
+        return complete_token(ary, prefix)
 
     def run(self, args):
 
@@ -109,7 +103,7 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
                     )
                     return False
                 if not inspect.isframe(frame):
-                    self.errmsg("%s is not a frame object" % frame)
+                    self.errmsg(f"{frame} is not a frame object")
                 pass
         else:
             frame_num = proc.curindex
@@ -122,31 +116,35 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
         self.section(mess)
 
         if is_builtin_eval_fn(frame):
-            self_obj = frame.f_locals.get("self")
-            builtin_name = self_obj.__class__.__name__
-            self.msg(f"  Builtin: {builtin_name}[]")
-            eval_name = frame.f_code.co_name
-            docstring = getattr(self_obj, eval_name).__doc__
-            docstring = docstring.replace("%(name)s", builtin_name)
-            self.msg(f"  Match pattern: {docstring}")
+            formatted_function_str = format_eval_builtin_fn(
+                frame, style=self.settings["style"]
+            )
+            self.msg("  " + formatted_function_str)
 
         if hasattr(frame, "f_restricted"):
-            self.msg("  restricted execution: %s" % frame.f_restricted)
+            self.msg(f"  restricted execution: {frame.f_restricted}")
 
         if is_verbose:
-            self.msg("  current line number: %d" % frame.f_lineno)
-            self.msg("  last instruction: %d" % frame.f_lasti)
-            self.msg("  code: %s" % frame.f_code)
+            self.msg(f"  current line number: {frame.f_lineno}")
+            self.msg("  last instruction: {frame.f_lasti}")
+            self.msg(f"  code: {frame.f_code}")
 
-        self.msg("  previous frame: %s" % frame.f_back)
-        self.msg("  tracing function: %s" % frame.f_trace)
+        self.msg(f"  previous frame: {frame.f_back}")
+        self.msg(f"  tracing function: {frame.f_trace}")
 
         if is_verbose:
             for name, field in [
                 ("Globals", "f_globals"),
                 ("Builtins", "f_builtins"),
             ]:
-                vals = getattr(frame, field).keys()
+                # FIXME: not sure this is quite right.
+                # For now we'll strip out values that start with the option
+                # prefix "-".
+                vals = [
+                    field
+                    for field in getattr(frame, field).keys()
+                    if not field.startswith("-")
+                ]
                 if vals:
                     self.section(name)
                     m = self.columnize_commands(vals)
@@ -158,7 +156,7 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
 
 
 if __name__ == "__main__":
-    from trepan.processor.command import mock, info as Minfo
+    from pymathics.debugger.processor.command import mock, info as Minfo
 
     d, cp = mock.dbg_setup()
     cp.setup()

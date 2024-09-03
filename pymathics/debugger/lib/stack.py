@@ -19,10 +19,13 @@
 import inspect
 import os.path as osp
 
+from pygments.token import Punctuation
 from trepan.lib.format import (
     Arrow,
+    Symbol,
     format_token,
 )
+
 from trepan.lib.stack import format_stack_entry
 from mathics.core.builtin import Builtin
 from mathics.core.expression import Expression
@@ -35,6 +38,48 @@ def count_frames(frame, count_start=0):
         count += 1
         frame = frame.f_back
     return count
+
+
+def format_eval_builtin_fn(frame, style: str) -> str:
+    """
+    Extract and format Mathics Builtin function information
+    from ``frame`` and return that as a string.
+    ``frame`` is assumed to be a Python frame
+    for which is_builtin_eval(frame) is True.
+    """
+    self_obj = frame.f_locals.get("self")
+    builtin_name = self_obj.__class__.__name__
+    formatted_builtin_name = format_token(
+        Symbol, builtin_name, style=style
+    ) + format_token(Punctuation, "[", style=style)
+
+    right_bracket = format_token(Punctuation, "]", style=style)
+
+    eval_name = frame.f_code.co_name
+    docstring = getattr(self_obj, eval_name).__doc__
+    docstring = docstring.replace("%(name)s", builtin_name)
+    if docstring.startswith(builtin_name):
+        # stop off name and []'s
+        docstring = docstring[len(builtin_name) + 1 : -1]
+        return f"{formatted_builtin_name}{docstring}{right_bracket}"
+    return f"{formatted_builtin_name}{right_bracket}"
+
+
+def is_builtin_eval_fn(frame) -> bool:
+    """
+    Return True if frame is the frame for a an eval() function of a
+    Mathics3 Builtin function.
+
+    We make the check based on whether the function name starts with "eval",
+    has a "self" parameter and the class that self is an instance of the Builtin
+    class.
+    """
+    if not inspect.isframe(frame):
+        return False
+    if not frame.f_code.co_name.startswith("eval"):
+        return False
+    self_obj = frame.f_locals.get("self")
+    return isinstance(self_obj, Builtin)
 
 
 def print_expression_stack(proc_obj, count: int, style="none"):
@@ -54,14 +99,15 @@ def print_expression_stack(proc_obj, count: int, style="none"):
             else:
                 intf.msg_nocr("E#")
             stack_nums = f"{j} ({i})"
+            intf.msg(f"{stack_nums} {frame.f_code.co_qualname} {self_obj.__class__}")
             intf.msg(
-                f"{stack_nums} {frame.f_code.co_qualname} {self_obj.__class__}"
-                )
-            intf.msg(" " * (4 + len(stack_nums)) +
-                     format_stack_entry(proc_obj.debugger, frame_lineno, style=style))
+                " " * (4 + len(stack_nums))
+                + format_stack_entry(proc_obj.debugger, frame_lineno, style=style)
+            )
             j += 1
             if j >= count:
                 break
+
 
 def print_builtin_stack(proc_obj, count: int, style="none"):
     """
@@ -73,18 +119,17 @@ def print_builtin_stack(proc_obj, count: int, style="none"):
     for i in range(n):
         frame_lineno = proc_obj.stack[len(proc_obj.stack) - i - 1]
         frame = frame_lineno[0]
-        self_obj = frame.f_locals.get("self", None)
-        if isinstance(self_obj, Builtin):
+        if is_builtin_eval_fn(frame):
             if frame is proc_obj.curframe:
                 intf.msg_nocr(format_token(Arrow, "B>", style=style))
             else:
                 intf.msg_nocr("B#")
             stack_nums = f"{j} ({i})"
+            intf.msg(f"{stack_nums} {format_eval_builtin_fn(frame, style=style)}")
             intf.msg(
-                f"{stack_nums}) {frame.f_code.co_qualname} {self_obj.__class__}"
-                )
-            intf.msg(" " * (4 + len(stack_nums)) +
-                     format_stack_entry(proc_obj.debugger, frame_lineno, style=style))
+                " " * (4 + len(stack_nums))
+                + format_stack_entry(proc_obj.debugger, frame_lineno, style=style)
+            )
             j += 1
             if j >= count:
                 break
@@ -100,7 +145,7 @@ def print_stack_entry(proc_obj, i_stack: int, style="none", opts={}):
         intf.msg_nocr("##")
     intf.msg(
         f"{i_stack} {format_stack_entry(proc_obj.debugger, frame_lineno, style=style)}"
-        )
+    )
 
 
 def print_stack_trace(proc_obj, count=None, style="none", opts={}):
@@ -203,7 +248,15 @@ if __name__ == "__main__":
     )
 
     m = MockDebugger()
-    print(format_stack_entry(m, (frame, 10,)))
+    print(
+        format_stack_entry(
+            m,
+            (
+                frame,
+                10,
+            ),
+        )
+    )
     # print(format_stack_entry(m, (frame, 10,), color="dark"))
     # print("frame count: %d" % count_frames(frame))
     # print("frame count: %d" % count_frames(frame.f_back))

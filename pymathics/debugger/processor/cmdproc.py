@@ -25,18 +25,11 @@ import sys
 import tempfile
 import traceback
 
-from typing import Tuple
-
 # Note: the module name pre 3.2 is repr
 from reprlib import Repr
+from typing import Tuple
 
 import pyficache
-from pygments.console import colorize
-from tracer import EVENT2SHORT
-
-from pymathics.debugger.tracing import call_event_debug
-
-
 import trepan.exception as Mexcept
 import trepan.lib.display as Mdisplay
 import trepan.lib.file as Mfile
@@ -44,10 +37,15 @@ import trepan.lib.stack as Mstack
 import trepan.lib.thred as Mthread
 import trepan.misc as Mmisc
 import trepan.processor.complete as Mcomplete
-from trepan.processor.cmdproc import get_stack
+from pygments.console import colorize
+from tracer import EVENT2SHORT
 from trepan.processor import cmdfns
 from trepan.processor.cmdfns import deparse_fn
+from trepan.processor.cmdproc import get_stack
 from trepan.vprocessor import Processor
+
+from pymathics.debugger.lib.stack import format_eval_builtin_fn, is_builtin_eval_fn
+from pymathics.debugger.tracing import call_event_debug
 
 warned_file_mismatches = set()
 
@@ -354,6 +352,13 @@ def print_location(proc_obj):
                     intf_obj.msg, lineno, line, proc_obj.event2short[proc_obj.event]
                 )
             pass
+
+        if is_builtin_eval_fn(frame):
+            formatted_function_str = format_eval_builtin_fn(
+                frame, style=proc_obj.debugger.settings["style"]
+            )
+            intf_obj.msg("  " + formatted_function_str)
+
         if "<string>" != filename:
             break
         pass
@@ -1084,9 +1089,7 @@ class CommandProcessor(Processor):
                     instance = getattr(command_mod, classname)(self)
                     cmd_instances.append(instance)
                 except Exception:
-                    print(
-                        f"Error loading {classname} from mod_name, sys.exc_info()[0]"
-                    )
+                    print(f"Error loading {classname} from mod_name, sys.exc_info()[0]")
                     pass
                 pass
             pass
