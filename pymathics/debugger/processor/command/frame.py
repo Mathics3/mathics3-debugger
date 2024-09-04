@@ -17,8 +17,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import inspect
-import sys
 import threading
+
+from optparse import OptionParser
 
 from trepan.lib import thred as Mthread
 from trepan.lib.complete import complete_token
@@ -26,18 +27,21 @@ from trepan.processor.cmdproc import get_stack
 
 # Our local modules
 from trepan.processor.command.base_cmd import DebuggerCommand
-from trepan.processor.frame import adjust_frame, frame_low_high
+from pymathics.debugger.processor.frame import FrameType, adjust_frame, frame_low_high
 
+
+frame_parser = OptionParser()
+frame_parser.add_option("-b", "--builtin", dest="builtin",
+                     action="store_true", default=False)
+
+frame_parser.add_option("-e", "--expression", dest="expression",
+                        action="store_true", default=False)
 
 class FrameCommand(DebuggerCommand):
-    """**frame** [*thread-Name*|*thread-number*] [*frame-number*]
+    """**frame** [*frame-number*]
 
     Change the current frame to frame *frame-number* if specified, or the
     current frame, 0, if no frame number specified.
-
-    If a thread name or thread number is given, change the current frame
-    to a frame in that thread. Dot (.) can be used to indicate the name of
-    the current frame the debugger is stopped in.
 
     A negative number indicates the position from the other or
     least-recently-entered end.  So `frame -1` moves to the oldest frame,
@@ -106,14 +110,21 @@ class FrameCommand(DebuggerCommand):
         self.proc.frame_thread_name = thread_name
         return
 
-    def one_arg_run(self, position_str):
-        """The simple case: thread frame switching has been done or is
-        not needed and we have an explicit position number as a string"""
+    def run(self, args):
+        """Run a frame command. This routine is a little complex
+        because we allow a number parameter variations."""
+
+        try:
+            opts, args = frame_parser.parse_args(args[1:])
+        except SystemExit:
+            return
+
+        frame_str = "0" if len(args) == 0 else args[0]
+
         frame_num = self.proc.get_an_int(
-            position_str,
-            ("The 'frame' command requires a" + " frame number. Got: %s")
-            % position_str,
-        )
+            frame_str,
+            f"The 'frame' command requires a frame number. Got: {frame_str}"
+            )
         if frame_num is None:
             return False
 
@@ -124,77 +135,20 @@ class FrameCommand(DebuggerCommand):
 
         if frame_num < -i_stack or frame_num > i_stack - 1:
             self.errmsg(
-                ("Frame number has to be in the range %d to %d." + " Got: %d (%s).")
-                % (-i_stack, i_stack - 1, frame_num, position_str)
+                f"Frame number has to be in the range 0 to {i_stack - 1}; "
+                f"is: {frame_num}."
             )
             return False
-        else:
-            adjust_frame(self.proc, pos=frame_num, is_absolute_pos=True)
-            return True
-        return  # Not reached
 
-    def get_from_thread_name_or_id(self, name_or_id, report_error=True):
-        """See if *name_or_id* is either a thread name or a thread id.
-        The frame of that id/name is returned, or None if name_or_id is
-        invalid."""
-        thread_id = self.proc.get_int_noerr(name_or_id)
-        if thread_id is None:
-            # Must be a "frame" command with frame name, not a frame
-            # number (or invalid command).
-            name2id = Mthread.map_thread_names()
-            if name_or_id == ".":
-                name_or_id = Mthread.current_thread_name()
-                pass
-            thread_id = name2id.get(name_or_id)
-            if thread_id is None:
-                self.errmsg("I don't know about thread name %s." % name_or_id)
-                return None, None
-            pass
-        # Above we should have set thread_id. Now see if we can
-        # find it.
-        threads = sys._current_frames()
-        frame = threads.get(thread_id)
-        if frame is None and report_error:
-            self.errmsg(
-                "I don't know about thread number %s (%d)." % name_or_id, thread_id
-            )
-            # self.info_thread_terse()
-            return None, None
-        return frame, thread_id
+        frame_type = FrameType.python
+        if opts.builtin:
+            frame_type = FrameType.builtin
+        elif opts.expression:
+            frame_type = FrameType.expression
 
-    def run(self, args):
-        """Run a frame command. This routine is a little complex
-        because we allow a number parameter variations."""
-
-        if len(args) == 1:
-            # Form is: "frame" which means "frame 0"
-            position_str = "0"
-        elif len(args) == 2:
-            # Form is: "frame {position | thread}
-            name_or_id = args[1]
-            frame, thread_id = self.get_from_thread_name_or_id(name_or_id, False)
-            if frame is None:
-                # Form should be: frame position
-                position_str = name_or_id
-            else:
-                # Form should be: "frame thread" which means
-                # "frame thread 0"
-                position_str = "0"
-                self.find_and_set_debugged_frame(frame, thread_id)
-                pass
-        elif len(args) == 3:
-            # Form is: frame <thread> <position>
-            name_or_id = args[1]
-            position_str = args[2]
-            frame, thread_id = self.get_from_thread_name_or_id(name_or_id)
-            if frame is None:
-                # Error message was given in routine
-                return
-            self.find_and_set_debugged_frame(frame, thread_id)
-            pass
-        self.one_arg_run(position_str)
-        return False
-
+        adjust_frame(self.proc, count=frame_num, is_absolute_pos=True,
+                     frame_type=frame_type)
+        return
 
 if __name__ == "__main__":
     from trepan import debugger as Mdebugger
@@ -212,12 +166,12 @@ if __name__ == "__main__":
         print("=" * 20)
         cmd.run(["frame"])
         print("-" * 20)
-        cmd.run(["frame", "MainThread"])
-        print("-" * 20)
-        cmd.run(["frame", ".", "0"])
-        print("-" * 20)
-        cmd.run(["frame", "."])
-        print("=" * 20)
+        # cmd.run(["frame", "MainThread"])
+        # print("-" * 20)
+        # cmd.run(["frame", ".", "0"])
+        # print("-" * 20)
+        # cmd.run(["frame", "."])
+        # print("=" * 20)
         return
 
     # showit(command)

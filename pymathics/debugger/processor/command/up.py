@@ -14,18 +14,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from optparse import OptionParser
-
-# Our local modules
 from pymathics.debugger.processor.command.base_cmd import DebuggerCommand
-from pymathics.debugger.processor.frame import FrameType, adjust_relative, frame_complete
-
-up_parser = OptionParser()
-up_parser.add_option("-b", "--builtin", dest="builtin",
-                     action="store_true", default=False)
-
-up_parser.add_option("-e", "--expression", dest="expression",
-                     action="store_true", default=False)
+from pymathics.debugger.processor.frame import FrameType, adjust_frame, frame_complete
+from pymathics.debugger.processor.command.frame import frame_parser
 
 class UpCommand(DebuggerCommand):
     """**up** [options] [*count*]
@@ -54,7 +45,7 @@ class UpCommand(DebuggerCommand):
 
     def run(self, args):
 
-        opts, args = up_parser.parse_args(args[1:])
+        opts, rest_args = frame_parser.parse_args(args[1:])
 
         frame_type = FrameType.python
         if opts.builtin:
@@ -62,7 +53,16 @@ class UpCommand(DebuggerCommand):
         elif opts.expression:
             frame_type = FrameType.expression
 
-        adjust_relative(self.proc, self.name, args, self.signum, frame_type)
+        if len(rest_args) == 0:
+            amount = 1
+        else:
+            amount = self.proc.get_an_int(
+                rest_args[0],
+                "The 'up command requires a count. Got: %s" % rest_args[0]
+                )
+
+        adjust_frame(self.proc, amount * self.signum, False,
+                     frame_type)
         return False
 
 
