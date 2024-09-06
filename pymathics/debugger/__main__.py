@@ -8,16 +8,27 @@ an event is triggered, or enter the debugger immediately.
 import mathics.eval.tracing as tracing
 from mathics.core.builtin import Builtin
 from mathics.core.evaluation import Evaluation
+from mathics.core.rules import BuiltinRule
 from mathics.core.symbols import SymbolTrue
 
-from pymathics.debugger.tracing import call_event_debug
+from pymathics.debugger.tracing import TraceEventNames, apply_builtin_fn, call_event_debug
 
 EVENT_OPTIONS = {
     "SymPy": "False",
     "Numpy": "False",
     "mpmath": "False",
-    "apply": "false",
+    "apply": "False",
+    "builtin": "False",
 }
+
+# FIXME:
+
+# We assume BuiltinRule.do_replace hasn't previously been
+# overwritten at LoadModule["pymathics.debugger"] time, so
+# the below save to EVALUATION_APPLY is pristine.
+# Eventually we might change  mathics.core.rules.BuiltinRule
+# in some way to make this more robust.
+EVALUATION_APPLY = BuiltinRule.do_replace
 
 class DebugActivate(Builtin):
     """
@@ -36,7 +47,7 @@ class DebugActivate(Builtin):
     # The function below should start with "eval"
     def eval(self, evaluation: Evaluation, options: dict):
         "DebugActivate[OptionsPattern[DebugActivate]]"
-        for event_name in tracing.TraceEventNames:
+        for event_name in TraceEventNames:
             option = self.get_option(options, event_name, evaluation)
             event_is_debugged = option == SymbolTrue
             if event_is_debugged:
@@ -49,6 +60,10 @@ class DebugActivate(Builtin):
             elif event_name == "SymPy":
                 tracing.run_sympy = (
                     tracing.run_sympy_traced if event_is_debugged else tracing.run_fast
+                )
+            elif event_name == "builtin":
+                BuiltinRule.do_replace = (
+                    apply_builtin_fn if event_is_debugged else EVALUATION_APPLY
                 )
 
 
@@ -87,7 +102,7 @@ class TraceActivate(Builtin):
     def eval(self, evaluation: Evaluation, options: dict):
         "TraceActivate[OptionsPattern[TraceActivate]]"
         # adjust_event_handlers(self, evaluation, options)
-        for event_name in tracing.TraceEventNames:
+        for event_name in TraceEventNames:
             option = self.get_option(options, event_name, evaluation)
             event_is_traced = option == SymbolTrue
             if event_is_traced:

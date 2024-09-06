@@ -14,44 +14,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from mathics.core.atoms import Atom
 from mathics.core.element import BaseElement
-from mathics.core.expression import Expression
-from mathics.core.list import ListExpression
-# from mathics.core.pattern import Pattern
-from mathics.core.symbols import Symbol
-
 from pymathics.debugger.processor.command.base_cmd import DebuggerCommand
-
-def format_element(element: BaseElement) -> str:
-    """
-    Formats a Mathics3 element more like the way it might be
-    entered, hiding some of the internal Element representation.
-
-    This includes context markers on symbols, or internal
-    object representations like ListExpression.
-    """
-    if isinstance(element, Symbol):
-        # print("XXX is Symbol")
-        return element.short_name
-    elif isinstance(element, Atom):
-        # print("XXX is atom")
-        return str(element)
-    elif isinstance(element, ListExpression):
-        # print("XXX is atom")
-        return "{%s}" % (
-            ", ".join([format_element(element) for element in element.elements]),
-        )
-    # elif isinstance(element, Blank):
-    #     # print("XXX is atom")
-    #     return str(element)
-    elif isinstance(element, Expression):
-        # print("XXX is expression")
-        return f"{format_element(element.head)}[%s]" % (
-            ", ".join([format_element(element) for element in element.elements]),
-        )
-    return str(element)
-
+from pymathics.debugger.lib.format import format_element
 
 class PrintElementCommand(DebuggerCommand):
     """**printelement** [*Mathics3 element*]

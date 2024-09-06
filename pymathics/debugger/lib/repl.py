@@ -60,7 +60,8 @@ class DebugREPL:
         self.settings["events"] = {
             "debugger",  # explicit call via "Debugger"
             "mpmath",  # mpmath call
-            "SymPy"  # SymPy call
+            "SymPy",  # SymPy call
+            "builtin"  # Builtin function call
             }
 
         def get_option(key: str) -> Any:
