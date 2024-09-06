@@ -6,7 +6,7 @@ import mathics.eval.tracing as eval_tracing
 from mathics.core.symbols import strip_context
 from pymathics.debugger.lib.format import format_element
 
-TraceEventNames = ("SymPy", "Numpy", "mpmath", "apply", "debugger", "builtin")
+TraceEventNames = ("SymPy", "Numpy", "mpmath", "apply", "debugger")
 TraceEvent = Enum("TraceEvent", TraceEventNames)
 
 
@@ -26,7 +26,7 @@ def apply_builtin_fn(self, expression, vars, options: dict, evaluation):
 
     if eval_tracing.hook_entry_fn is not None:
         args = (self, expression, vars, options, evaluation)
-        skip_call = eval_tracing.hook_entry_fn(TraceEvent.builtin, *args)
+        skip_call = eval_tracing.hook_entry_fn(TraceEvent.apply, *args)
     else:
         skip_call = False
 
@@ -46,9 +46,9 @@ def call_event_debug(event: TraceEvent, fn: Callable, *args) -> bool:
         from pymathics.debugger.lib.repl import DebugREPL
         dbg = DebugREPL()
 
-    if event == TraceEvent.builtin:
+    if event == TraceEvent.apply:
         # args[0] has the expression to be called
-        print(f"{event.name} apply  : {format_element(args[0])}")
+        print(f"{event.name}: {format_element(args[0])}")
     else:
         if type(fn) is type or inspect.ismethod(fn) or inspect.isfunction(fn):
             name = f"{fn.__module__}.{fn.__qualname__}"

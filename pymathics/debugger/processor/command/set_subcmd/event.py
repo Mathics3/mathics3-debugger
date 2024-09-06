@@ -18,10 +18,10 @@
 from trepan.processor.command.base_subcmd import DebuggerSubcommand
 
 import mathics.eval.tracing as tracing
-from pymathics.debugger.tracing import call_event_debug
+from pymathics.debugger.tracing import TraceEventNames, call_event_debug
 
 
-class SetEvents(DebuggerSubcommand):
+class SetEvent(DebuggerSubcommand):
 
     """**set event** *event* {on|off|tracing}]
 
@@ -52,17 +52,17 @@ class SetEvents(DebuggerSubcommand):
     # Also, DRY this code
 
     def run(self, args):
-        valid_args = ("SymPy", "NumPy", "all", "mpmath")
+        valid_args = list(TraceEventNames) + ["all"]
         i = 0
         while i < len(args):
             arg = args[i]
             if arg not in valid_args:
-                self.errmsg(f"set events: Invalid argument {arg} ignored.")
+                self.errmsg(f"set event: Invalid argument {arg} ignored.")
                 return
             i += 1
             event_type = arg
             if i >= len(args):
-                self.errmsg("set events: expecting another argument: 'on', 'off', 'tracing' or 'debug'")
+                self.errmsg("set event: expecting another argument: 'on', 'off', 'tracing' or 'debug'")
                 return
             on_off = args[i]
             i += 1
@@ -73,7 +73,7 @@ class SetEvents(DebuggerSubcommand):
             if event_type in ("SymPy", "all"):
                 if on_off in ("on", "debug"):
                     tracing.hook_entry_fn = call_event_debug
-
+                    tracing.run_sympy = tracing.run_sympy_traced
                 elif on_off == "trace":
                     tracing.hook_entry_fn = tracing.call_event_print
                     tracing.run_sympy = tracing.run_sympy_traced
@@ -98,8 +98,8 @@ if __name__ == "__main__":
 
     d, cp = mock.dbg_setup()
     s = Mset.SetCommand(cp)
-    sub = SetEvents(s)
-    sub.name = "events"
+    sub = SetEvent(s)
+    sub.name = "event"
     for args in (("mpmath", "trace"), ("SymPy", "debug"), ("SymPy", "foo"), ("bogus",)):
         sub.run(args)
         pass

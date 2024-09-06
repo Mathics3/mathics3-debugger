@@ -18,7 +18,6 @@ EVENT_OPTIONS = {
     "Numpy": "False",
     "mpmath": "False",
     "apply": "False",
-    "builtin": "False",
 }
 
 # FIXME:
@@ -61,7 +60,7 @@ class DebugActivate(Builtin):
                 tracing.run_sympy = (
                     tracing.run_sympy_traced if event_is_debugged else tracing.run_fast
                 )
-            elif event_name == "builtin":
+            elif event_name == "apply":
                 BuiltinRule.do_replace = (
                     apply_builtin_fn if event_is_debugged else EVALUATION_APPLY
                 )
