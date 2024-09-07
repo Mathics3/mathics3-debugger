@@ -11,7 +11,12 @@ from mathics.core.evaluation import Evaluation
 from mathics.core.rules import BuiltinRule
 from mathics.core.symbols import SymbolTrue
 
-from pymathics.debugger.tracing import TraceEventNames, apply_builtin_fn, call_event_debug
+from pymathics.debugger.tracing import (
+    TraceEventNames,
+    apply_builtin_fn_print,
+    apply_builtin_fn_traced,
+    call_event_debug,
+)
 
 EVENT_OPTIONS = {
     "SymPy": "False",
@@ -28,6 +33,7 @@ EVENT_OPTIONS = {
 # Eventually we might change  mathics.core.rules.BuiltinRule
 # in some way to make this more robust.
 EVALUATION_APPLY = BuiltinRule.do_replace
+
 
 class DebugActivate(Builtin):
     """
@@ -70,7 +76,7 @@ class DebugActivate(Builtin):
                 )
             elif event_name == "apply":
                 BuiltinRule.do_replace = (
-                    apply_builtin_fn if event_is_debugged else EVALUATION_APPLY
+                    apply_builtin_fn_traced if event_is_debugged else EVALUATION_APPLY
                 )
 
 
@@ -122,4 +128,8 @@ class TraceActivate(Builtin):
             elif event_name == "SymPy":
                 tracing.run_sympy = (
                     tracing.run_sympy_traced if event_is_traced else tracing.run_fast
+                )
+            elif event_name == "apply":
+                BuiltinRule.do_replace = (
+                    apply_builtin_fn_print if event_is_traced else EVALUATION_APPLY
                 )

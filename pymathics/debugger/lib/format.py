@@ -41,7 +41,7 @@ def format_element(element: BaseElement) -> str:
     elif isinstance(element, Expression):
         # print("XXX is expression")
         if element.head is SymbolRule:
-            return f"{format_element(element.elements[0])}->{format_element(element.elements[0])}"
+            return f"{format_element(element.elements[0])}->{format_element(element.elements[1])}"
         else:
             return f"{format_element(element.head)}[%s]" % (
                 ", ".join([format_element(element) for element in element.elements]),
@@ -56,5 +56,7 @@ def pygments_format(mathics_str: str, style) -> str:
     """Add terminial formatting for a Mathics3 string
     ``mathics_str``, using pygments style ``style``.
     """
+    if style is None:
+        return mathics_str
     terminal_formatter = Terminal256Formatter(style=style)
     return highlight(mathics_str, mma_lexer, terminal_formatter)
