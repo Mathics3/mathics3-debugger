@@ -22,6 +22,7 @@ This module contains the ``DebugREPL`` class
 
 import sys
 
+from term_background import is_dark_background
 from typing import Any
 from trepan.interfaces.user import UserInterface
 from trepan.lib.default import DEBUGGER_SETTINGS
@@ -29,6 +30,9 @@ from pymathics.debugger.lib.core import DebuggerCore
 
 # Default settings used here
 from trepan.misc import option_set
+
+is_dark_bg = is_dark_background()
+default_style = "zenburn" if is_dark_bg else "colorful"
 
 try:
     from readline import get_line_buffer
@@ -63,6 +67,7 @@ class DebugREPL:
             "SymPy",  # SymPy call
             "apply"  # Builtin function call
             }
+        self.settings["style"] = default_style
 
         def get_option(key: str) -> Any:
             return option_set(opts, key, DEBUGGER_SETTINGS)
