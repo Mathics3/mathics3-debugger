@@ -36,6 +36,14 @@ class DebugActivate(Builtin):
       <dd>Set to enter debugger entry on certain event
     </dl>
 
+    $options$ include:
+    <ul>
+      <li>'SymPy': debug SymPy calls
+      <li>'NumPy':  debug NumPy calls
+      <li>'mpmath': debug mpmath calls
+      <li>'apply'; debug function apply calls
+    </ul>
+
     >> DebugActivate[SymPy -> True]
      = ...
     """
