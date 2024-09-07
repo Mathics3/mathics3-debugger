@@ -580,6 +580,26 @@ class CommandProcessor(Processor):
             raise
         return None  # Not reached
 
+    def eval_mathics_line(self, line: str):
+        """
+        Evaluate a Mathics3 statement inside `line` and
+        print result.
+        """
+        if not self.curframe:
+            self.errmsg("evaluation needs a current frame")
+            return
+
+        local_vars = self.curframe.f_locals
+
+        evaluation = local_vars.get("evaluation")
+        if evaluation is None:
+            self.errmsg("evaluation variable not found as a local variable")
+            return
+
+        result = evaluation.parse_evaluate(line)
+        self.print_mathics_eval_result(result)
+        return
+
     def exec_line(self, line):
         if self.curframe:
             local_vars = self.curframe.f_locals
@@ -736,6 +756,29 @@ class CommandProcessor(Processor):
             )
             return False
         return True
+
+    def print_mathics_eval_result(self, result):
+        if result is None:
+            return
+
+        last_eval = result.last_eval
+
+        eval_type = None
+        if last_eval is not None:
+            try:
+                eval_type = last_eval.get_head_name()
+            except Exception:
+                print(sys.exc_info()[1])
+                return
+
+        out_str = str(result.result)
+        if eval_type == "System`String":
+            out_str = '"' + out_str.replace('"', r"\"") + '"'
+        if eval_type == "System`Graph":
+            out_str = "-Graph-"
+
+        self.msg(out_str)
+
 
     def process_commands(self):
         """Handle debugger commands."""
