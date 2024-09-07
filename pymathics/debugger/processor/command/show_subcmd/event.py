@@ -20,7 +20,12 @@ from mathics.core.rules import BuiltinRule
 # Our local modules
 from trepan.processor.command.base_subcmd import DebuggerSubcommand
 
-from pymathics.debugger.tracing import TraceEventNames, apply_builtin_fn
+from pymathics.debugger.tracing import (
+    TraceEventNames,
+    apply_builtin_fn_traced,
+    apply_builtin_fn_print,
+)
+
 
 class ShowEvent(DebuggerSubcommand):
     """**set event** *event* {on|off|tracing}]
@@ -60,18 +65,38 @@ class ShowEvent(DebuggerSubcommand):
                 return
 
             if event_name == "SymPy":
-                on_off = "on" if tracing.run_sympy == tracing.run_sympy_traced else "off"
+                replace_fn= tracing.run_sympy
+                if replace_fn == tracing.run_sympy_traced:
+                    status = "debug"
+                elif replace_fn == tracing.call_event_print:
+                    status = "tracing"
+                else:
+                    status = "off"
             elif event_name == "mpmath":
-                on_off = "on" if tracing.run_mpmath == tracing.run_mpmath_traced else "off"
+                replace_fn= tracing.run_mpmath
+                if replace_fn == tracing.run_mpmath_traced:
+                    status = "debug"
+                elif replace_fn == tracing.call_event_print:
+                    status = "tracing"
+                else:
+                    status = "off"
+                status = (
+                    "on" if tracing.run_mpmath == tracing.run_mpmath_traced else "off"
+                )
             elif event_name == "apply":
-                on_off = "on" if BuiltinRule.do_replace == apply_builtin_fn else "off"
+                replace_fn = BuiltinRule.do_replace
+                if replace_fn == apply_builtin_fn_traced:
+                    status = "debug"
+                elif replace_fn == apply_builtin_fn_print:
+                    status = "tracing"
+                else:
+                    status = "off"
             elif event_name == "debugger":
                 continue
             else:
-                on_off = "??"
+                status = "??"
 
-
-            self.msg(f"Event {event_name} is {on_off}")
+            self.msg(f"Event {event_name} is {status}")
 
     pass
     min_abbrev = len("ev")

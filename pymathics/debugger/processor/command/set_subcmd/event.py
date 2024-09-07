@@ -18,8 +18,15 @@
 from trepan.processor.command.base_subcmd import DebuggerSubcommand
 
 import mathics.eval.tracing as tracing
-from pymathics.debugger.tracing import TraceEventNames, call_event_debug
+from pymathics.debugger.__main__ import EVALUATION_APPLY
 
+from pymathics.debugger.tracing import (
+    TraceEventNames,
+    apply_builtin_fn_traced,
+    apply_builtin_fn_print,
+    call_event_debug,
+)
+from mathics.core.rules import BuiltinRule
 
 class SetEvent(DebuggerSubcommand):
 
@@ -60,7 +67,7 @@ class SetEvent(DebuggerSubcommand):
                 self.errmsg(f"set event: Invalid argument {arg} ignored.")
                 return
             i += 1
-            event_type = arg
+            event_name = arg
             if i >= len(args):
                 self.errmsg("set event: expecting another argument: 'on', 'off', 'tracing' or 'debug'")
                 return
@@ -70,7 +77,7 @@ class SetEvent(DebuggerSubcommand):
                 self.errmsg("set events: expecting another argument: 'on', 'off', 'tracing' or 'debug'")
                 return
 
-            if event_type in ("SymPy", "all"):
+            if event_name in ("SymPy", "all"):
                 if on_off in ("on", "debug"):
                     tracing.hook_entry_fn = call_event_debug
                     tracing.run_sympy = tracing.run_sympy_traced
@@ -80,7 +87,7 @@ class SetEvent(DebuggerSubcommand):
                 else:
                     tracing.run_sympy = tracing.run_fast
 
-            if event_type in ("mpmath", "all"):
+            elif event_name in ("mpmath", "all"):
                 if on_off in ("on", "debug"):
                     tracing.hook_entry_fn = call_event_debug
                     tracing.run_mpmath = tracing.run_mpmath_traced
@@ -89,6 +96,15 @@ class SetEvent(DebuggerSubcommand):
                     tracing.run_mpmath = tracing.run_mpmath_traced
                 else:
                     tracing.run_mpmath = tracing.run_fast
+
+            elif event_name in ("apply", "all"):
+                if on_off in ("on", "debug"):
+                    BuiltinRule.do_replace = apply_builtin_fn_traced
+                elif on_off == "trace":
+                    BuiltinRule.do_replace = apply_builtin_fn_print
+                else:
+                    BuiltinRule.do_replace = EVALUATION_APPLY
+
 
     pass
 
