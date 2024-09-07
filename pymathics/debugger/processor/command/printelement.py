@@ -16,7 +16,7 @@
 
 from mathics.core.element import BaseElement
 from pymathics.debugger.processor.command.base_cmd import DebuggerCommand
-from pymathics.debugger.lib.format import format_element
+from pymathics.debugger.lib.format import format_element, pygments_format
 
 class PrintElementCommand(DebuggerCommand):
     """**printelement** [*Mathics3 element*]
@@ -42,7 +42,8 @@ class PrintElementCommand(DebuggerCommand):
             self.errmsg(f"text: {text} does not evaluate to an Element type (is {type(value)}")
             return
 
-        self.msg(format_element(value))
+        mathics_str = format_element(value)
+        self.msg(pygments_format(mathics_str, self.settings["style"]))
     pass
 
 

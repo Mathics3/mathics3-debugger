@@ -34,6 +34,7 @@ setup(
     install_requires=[
         "Mathics3>=7.0.0.dev0",
         "trepan3k>=1.3.0.dev",
+        "mathics-pygments",
     ],
     # don't pack Mathics in egg because of media files, etc.
     zip_safe=False,
