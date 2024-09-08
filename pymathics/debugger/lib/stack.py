@@ -19,17 +19,15 @@
 import inspect
 import os.path as osp
 
-from pygments.token import Punctuation
 from trepan.lib.format import (
     Arrow,
-    Symbol,
     format_token,
 )
 
 from trepan.lib.stack import format_stack_entry
 from mathics.core.builtin import Builtin
 from mathics.core.expression import Expression
-
+from pymathics.debugger.lib.format import pygments_format
 
 def count_frames(frame, count_start=0):
     """Return a count of the number of frames"""
@@ -49,20 +47,18 @@ def format_eval_builtin_fn(frame, style: str) -> str:
     """
     self_obj = frame.f_locals.get("self")
     builtin_name = self_obj.__class__.__name__
-    formatted_builtin_name = format_token(
-        Symbol, builtin_name, style=style
-    ) + format_token(Punctuation, "[", style=style)
-
-    right_bracket = format_token(Punctuation, "]", style=style)
 
     eval_name = frame.f_code.co_name
     docstring = getattr(self_obj, eval_name).__doc__
     docstring = docstring.replace("%(name)s", builtin_name)
-    if docstring.startswith(builtin_name):
-        # stop off name and []'s
-        docstring = docstring[len(builtin_name) + 1 : -1]
-        return f"{formatted_builtin_name}{docstring}{right_bracket}"
-    return f"{formatted_builtin_name}{right_bracket}"
+    args_pattern = (
+        docstring[len(builtin_name) + 1 : -1]
+        if docstring.startswith(builtin_name)
+        else ""
+    )
+
+    call_string = f"{builtin_name}[{args_pattern}]"
+    return f"{pygments_format(call_string, style)}"
 
 
 def is_builtin_eval_fn(frame) -> bool:

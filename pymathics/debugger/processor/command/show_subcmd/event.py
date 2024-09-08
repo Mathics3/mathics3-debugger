@@ -84,7 +84,7 @@ class ShowEvent(DebuggerSubcommand):
                     "on" if tracing.run_mpmath == tracing.run_mpmath_traced else "off"
                 )
             elif event_name == "apply":
-                replace_fn = BuiltinRule.do_replace
+                replace_fn = BuiltinRule.apply_rule
                 if replace_fn == apply_builtin_fn_traced:
                     status = "debug"
                 elif replace_fn == apply_builtin_fn_print:

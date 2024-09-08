@@ -15,6 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from mathics.core.element import BaseElement
+from mathics.core.rules import Rule
 from pymathics.debugger.processor.command.base_cmd import DebuggerCommand
 from pymathics.debugger.lib.format import format_element, pygments_format
 
@@ -38,8 +39,8 @@ class PrintElementCommand(DebuggerCommand):
         except Exception:
             return
 
-        if not isinstance(value, BaseElement):
-            self.errmsg(f"text: {text} does not evaluate to an Element type (is {type(value)}")
+        if not isinstance(value, (BaseElement, Rule)):
+            self.errmsg(f"text: {text} does not evaluate to an Element or Rule type (is {type(value)}")
             return
 
         mathics_str = format_element(value)

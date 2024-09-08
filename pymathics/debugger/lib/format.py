@@ -16,21 +16,18 @@ mma_lexer = MathematicaLexer()
 
 
 def format_element(element: BaseElement) -> str:
-    """
-    Formats a Mathics3 element more like the way it might be
-    entered, hiding some of the internal Element representation.
+    """Formats a Mathics3 element more like the way it might be
+    entered in Mathics3, hiding some of the internal Element representation.
 
-    This includes context markers on symbols, or internal
-    object representations like ListExpression.
+    This includes removing some context markers on symbols, or
+    internal object representations like ListExpression.
+
     """
     if isinstance(element, Symbol):
-        # print("XXX is Symbol")
         return element.short_name
     elif isinstance(element, Atom):
-        # print("XXX is atom")
         return str(element)
     elif isinstance(element, ListExpression):
-        # print("XXX is atom")
         return "{%s}" % (
             ", ".join([format_element(element) for element in element.elements]),
         )

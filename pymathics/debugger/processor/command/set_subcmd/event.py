@@ -99,11 +99,11 @@ class SetEvent(DebuggerSubcommand):
 
             elif event_name in ("apply", "all"):
                 if on_off in ("on", "debug"):
-                    BuiltinRule.do_replace = apply_builtin_fn_traced
+                    BuiltinRule.apply_rule = apply_builtin_fn_traced
                 elif on_off == "trace":
-                    BuiltinRule.do_replace = apply_builtin_fn_print
+                    BuiltinRule.apply_rule = apply_builtin_fn_print
                 else:
-                    BuiltinRule.do_replace = EVALUATION_APPLY
+                    BuiltinRule.apply_rule = EVALUATION_APPLY
 
 
     pass
