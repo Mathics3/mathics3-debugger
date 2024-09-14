@@ -30,7 +30,7 @@ from mathics.core.rules import BuiltinRule
 
 class SetEvent(DebuggerSubcommand):
 
-    """**set event** *event* {on|off|tracing}]
+    """**set event** *event* {on|off|trace}]
 
     Sets the Mathics events that the debugger will stop on. Event names are:
     `SymPy`, `mpmath`, and `NumPy`
@@ -42,6 +42,7 @@ class SetEvent(DebuggerSubcommand):
 
       set event SymPy on            # Turn SymPy tracing on
       set event Sympy off NumPy on
+      set event mpmath trace        # trace calls but don't stop
       set event all off             # Turn trace filter off for aall events.
 
     See also:
