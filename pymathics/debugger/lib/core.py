@@ -74,6 +74,11 @@ class DebuggerCore:
         self.current_bp = None
         self.debugger = debugger
 
+        # When not None, it is a Python debugger object, which is right now trepan3k
+        # debugger object. This is used so we can switch from the Mathics3 debugger into a
+        # lower-level trepan3k debugger.
+        self.python_debugger = None
+
         # Threading lock ensures that we don't have other traced threads
         # running when we enter the debugger. Later we may want to have
         # a switch to control.

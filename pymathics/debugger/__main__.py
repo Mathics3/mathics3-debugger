@@ -5,6 +5,7 @@ These functions allow you to set events for entering the debugger when \
 an event is triggered, or enter the debugger immediately.
 """
 
+import inspect
 import mathics.eval.tracing as tracing
 from mathics.core.builtin import Builtin
 from mathics.core.evaluation import Evaluation
@@ -15,7 +16,9 @@ from pymathics.debugger.tracing import (
     TraceEventNames,
     apply_builtin_fn_print,
     apply_builtin_fn_traced,
+    dbg,
     call_event_debug,
+    call_trepan3k,
 )
 
 EVENT_OPTIONS = {
@@ -83,19 +86,39 @@ class DebugActivate(Builtin):
 class Debugger(Builtin):
     """
     <dl>
-      <dt>'Debugger'[]
+      <dt>'Debugger'[trepan3k -> True]
       <dd>enter debugger entry on certain event
     </dl>
 
     X> Debugger[]
      = ...
+
+    X> Debugger[trepan3k -> True]
+     = ...
     """
 
+    options = {"trepan3k": "False"}
     summary_text = """get into Mathics3 Debugger REPL"""
 
-    def eval(self, evaluation: Evaluation):
-        "Debugger[]"
-        call_event_debug(tracing.TraceEvent.debugger, Debugger.eval, evaluation)
+    def eval(self, evaluation: Evaluation, options: dict):
+        "Debugger[OptionsPattern[Debugger]]"
+        if self.get_option(options, "trepan3k", evaluation) == SymbolTrue:
+            global dbg
+            if dbg is None:
+                from pymathics.debugger.lib.repl import DebugREPL
+                dbg = DebugREPL()
+
+
+            frame = inspect.currentframe()
+            if frame is not None:
+                dbg.core.processor.curframe = frame.f_back
+                call_trepan3k(dbg.core.processor)
+            else:
+                print("Error getting current frame")
+
+        else:
+            call_event_debug(tracing.TraceEvent.debugger, Debugger.eval, evaluation)
+
 
 
 class TraceActivate(Builtin):

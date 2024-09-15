@@ -1,6 +1,7 @@
 import inspect
 from enum import Enum
 from typing import Callable
+from trepan.debugger import Trepan
 
 import mathics.eval.tracing as eval_tracing
 from mathics.core.symbols import strip_context
@@ -102,3 +103,23 @@ def call_event_debug(event: TraceEvent, fn: Callable, *args) -> bool:
     dbg.core.trace_dispatch(current_frame, event_str, args)
 
     return False
+
+# Shoudl this be here?
+def call_trepan3k(proc_obj):
+    """
+    Go into trepan3k - the lower-level Python debugger
+    """
+    core_obj = proc_obj.core
+    if core_obj.python_debugger is None:
+        debug_opts = {
+            "settings": core_obj.debugger.settings,
+            "interface": proc_obj.intf[-1]
+        }
+        core_obj.python_debugger = Trepan(opts=debug_opts)
+
+    event = "line"
+    python_core_obj = core_obj.python_debugger.core
+    python_core_obj.execution_status = "Running"
+    python_core_obj.processor.event_processor(proc_obj.curframe, event, None)
+    print("call done")
+    return
