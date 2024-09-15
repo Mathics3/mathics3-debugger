@@ -30,7 +30,7 @@ from mathics.core.rules import BuiltinRule
 
 class SetEvent(DebuggerSubcommand):
 
-    """**set event** *event* {on|off|tracing}]
+    """**set event** *event* {on|off|trace}]
 
     Sets the Mathics events that the debugger will stop on. Event names are:
     `SymPy`, `mpmath`, and `NumPy`
@@ -42,6 +42,7 @@ class SetEvent(DebuggerSubcommand):
 
       set event SymPy on            # Turn SymPy tracing on
       set event Sympy off NumPy on
+      set event mpmath trace        # trace calls but don't stop
       set event all off             # Turn trace filter off for aall events.
 
     See also:
@@ -69,12 +70,12 @@ class SetEvent(DebuggerSubcommand):
             i += 1
             event_name = arg
             if i >= len(args):
-                self.errmsg("set event: expecting another argument: 'on', 'off', 'tracing' or 'debug'")
+                self.errmsg("set event: expecting another argument: 'on', 'off', 'trace' or 'debug'")
                 return
             on_off = args[i]
             i += 1
             if on_off not in ("on", "off", "trace", "debug"):
-                self.errmsg("set events: expecting another argument: 'on', 'off', 'tracing' or 'debug'")
+                self.errmsg(f"set events: expecting argument: 'on', 'off', 'trace' or 'debug'; got: '{on_off}'")
                 return
 
             if event_name in ("SymPy", "all"):
@@ -99,11 +100,11 @@ class SetEvent(DebuggerSubcommand):
 
             elif event_name in ("apply", "all"):
                 if on_off in ("on", "debug"):
-                    BuiltinRule.apply_rule = apply_builtin_fn_traced
+                    BuiltinRule.apply_function = apply_builtin_fn_traced
                 elif on_off == "trace":
-                    BuiltinRule.apply_rule = apply_builtin_fn_print
+                    BuiltinRule.apply_function = apply_builtin_fn_print
                 else:
-                    BuiltinRule.apply_rule = EVALUATION_APPLY
+                    BuiltinRule.apply_function = EVALUATION_APPLY
 
 
     pass

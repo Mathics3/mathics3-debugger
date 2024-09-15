@@ -27,12 +27,12 @@ EVENT_OPTIONS = {
 
 # FIXME:
 
-# We assume BuiltinRule.apply_rule hasn't previously been
+# We assume BuiltinRule.apply_function hasn't previously been
 # overwritten at LoadModule["pymathics.debugger"] time, so
 # the below save to EVALUATION_APPLY is pristine.
 # Eventually we might change  mathics.core.rules.BuiltinRule
 # in some way to make this more robust.
-EVALUATION_APPLY = BuiltinRule.apply_rule
+EVALUATION_APPLY = BuiltinRule.apply_function
 
 
 class DebugActivate(Builtin):
@@ -75,7 +75,7 @@ class DebugActivate(Builtin):
                     tracing.run_sympy_traced if event_is_debugged else tracing.run_fast
                 )
             elif event_name == "apply":
-                BuiltinRule.apply_rule = (
+                BuiltinRule.apply_function = (
                     apply_builtin_fn_traced if event_is_debugged else EVALUATION_APPLY
                 )
 
@@ -130,6 +130,6 @@ class TraceActivate(Builtin):
                     tracing.run_sympy_traced if event_is_traced else tracing.run_fast
                 )
             elif event_name == "apply":
-                BuiltinRule.apply_rule = (
+                BuiltinRule.apply_function = (
                     apply_builtin_fn_print if event_is_traced else EVALUATION_APPLY
                 )

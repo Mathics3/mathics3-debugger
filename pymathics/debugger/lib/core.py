@@ -33,10 +33,10 @@ from typing import Any
 
 # External packages
 import pyficache
-import tracefilter
 import tracer
 import trepan.clifns as Mclifns
-from mathics.eval.tracing import run_mpmath_traced, run_sympy_traced
+import mathics.eval.tracing
+from tracer.tracefilter import TraceFilter
 
 # Our local modules
 from trepan.lib.breakpoint import BreakpointManager
@@ -54,14 +54,8 @@ class DebuggerCore:
         # entering event processor? Zero (0) means stop at the next one.
         # A negative number indicates no eventual stopping.
         "step_ignore": 0,
-        "ignore_filter": tracefilter.TraceFilter(
-            [
-                tracer.start,
-                tracer.stop,
-                # call_event_debug,
-                run_mpmath_traced,
-                run_sympy_traced,
-            ]
+        "ignore_filter": TraceFilter(
+            [tracer, mathics.eval.tracing]
         ),
     }
 
@@ -144,7 +138,7 @@ class DebuggerCore:
         """Add `frame_or_fn' to the list of functions that are not to
         be debugged"""
         for frame_or_fn in frames_or_fns:
-            rc = self.ignore_filter.add_include(frame_or_fn)
+            rc = self.ignore_filter.add(frame_or_fn)
             pass
         return rc
 
@@ -422,7 +416,7 @@ class DebuggerCore:
             # This will disallow a command like "jump" from working properly,
             # which will give a cryptic the message on setting f_lineno:
             #   f_lineno can only be set by a trace function
-            if self.ignore_filter and self.ignore_filter.is_included(frame):
+            if self.ignore_filter and self.ignore_filter.is_excluded(frame):
                 return self
 
             if self.debugger.settings["trace"]:
