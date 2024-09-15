@@ -35,8 +35,8 @@ from typing import Any
 import pyficache
 import tracer
 import trepan.clifns as Mclifns
+import mathics.eval.tracing
 from tracer.tracefilter import TraceFilter
-from mathics.eval.tracing import run_mpmath_traced, run_sympy_traced
 
 # Our local modules
 from trepan.lib.breakpoint import BreakpointManager
@@ -55,13 +55,7 @@ class DebuggerCore:
         # A negative number indicates no eventual stopping.
         "step_ignore": 0,
         "ignore_filter": TraceFilter(
-            [
-                tracer.start,
-                tracer.stop,
-                # call_event_debug,
-                run_mpmath_traced,
-                run_sympy_traced,
-            ]
+            [tracer, mathics.eval.tracing]
         ),
     }
 
