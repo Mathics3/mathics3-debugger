@@ -26,7 +26,7 @@ from pymathics.debugger.tracing import (
     apply_builtin_fn_print,
     call_event_debug,
 )
-from mathics.core.rules import BuiltinRule
+from mathics.core.rules import FunctionApplyRule
 
 class SetEvent(DebuggerSubcommand):
 
@@ -100,11 +100,11 @@ class SetEvent(DebuggerSubcommand):
 
             elif event_name in ("apply", "all"):
                 if on_off in ("on", "debug"):
-                    BuiltinRule.apply_function = apply_builtin_fn_traced
+                    FunctionApplyRule.apply_function = apply_builtin_fn_traced
                 elif on_off == "trace":
-                    BuiltinRule.apply_function = apply_builtin_fn_print
+                    FunctionApplyRule.apply_function = apply_builtin_fn_print
                 else:
-                    BuiltinRule.apply_function = EVALUATION_APPLY
+                    FunctionApplyRule.apply_function = EVALUATION_APPLY
 
 
     pass
