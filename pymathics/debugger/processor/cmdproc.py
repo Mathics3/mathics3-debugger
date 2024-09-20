@@ -403,6 +403,7 @@ class CommandProcessor(Processor):
         self.event2short["debugger"] = "$ "
         self.event2short["mpmath"] = "mp"
         self.event2short["SymPy"] = "SP"
+        self.event2short["Get"] = "<<"
 
         self.optional_modules = tuple()
         self.cmd_instances = self._populate_commands()

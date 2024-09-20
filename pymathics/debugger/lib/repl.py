@@ -64,6 +64,7 @@ class DebugREPL:
         self.settings["events"] = {
             "debugger",  # explicit call via "Debugger"
             "mpmath",  # mpmath call
+            "Get",  # Get[]
             "SymPy",  # SymPy call
             "apply"  # Builtin function call
             }

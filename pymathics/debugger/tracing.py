@@ -7,11 +7,12 @@ import mathics.eval.tracing as eval_tracing
 from mathics.core.symbols import strip_context
 from pymathics.debugger.lib.format import format_element, pygments_format
 
-TraceEventNames = ("SymPy", "Numpy", "mpmath", "apply", "debugger")
+TraceEventNames = ("SymPy", "Numpy", "mpmath", "apply", "debugger", "Get", "parse")
 TraceEvent = Enum("TraceEvent", TraceEventNames)
 
 
 dbg = None
+
 
 def apply_builtin_fn_traced(self, expression, vars, options: dict, evaluation):
     """
@@ -53,8 +54,8 @@ def apply_builtin_fn_print(self, expression, vars, options: dict, evaluation):
     global dbg
     if dbg is None:
         from pymathics.debugger.lib.repl import DebugREPL
-        dbg = DebugREPL()
 
+        dbg = DebugREPL()
 
     style = dbg.settings["style"]
     mathics_str = format_element(expression)
@@ -74,6 +75,7 @@ def call_event_debug(event: TraceEvent, fn: Callable, *args) -> bool:
     global dbg
     if dbg is None:
         from pymathics.debugger.lib.repl import DebugREPL
+
         dbg = DebugREPL()
 
     msg = dbg.core.processor.msg
@@ -104,7 +106,28 @@ def call_event_debug(event: TraceEvent, fn: Callable, *args) -> bool:
 
     return False
 
-# Shoudl this be here?
+
+def call_event_get(line_number: int, text: str) -> bool:
+    """
+    A somewhat generic function to show an event-traced call.
+    """
+    global dbg
+    if dbg is None:
+        from pymathics.debugger.lib.repl import DebugREPL
+
+        dbg = DebugREPL()
+
+    current_frame = inspect.currentframe()
+    if current_frame is not None:
+        current_frame = current_frame.f_back
+
+    dbg.core.execution_status = "Running"
+    dbg.core.trace_dispatch(current_frame, "Get", (line_number, text))
+
+    return False
+
+
+# Should this be here?
 def call_trepan3k(proc_obj):
     """
     Go into trepan3k - the lower-level Python debugger
@@ -113,7 +136,7 @@ def call_trepan3k(proc_obj):
     if core_obj.python_debugger is None:
         debug_opts = {
             "settings": core_obj.debugger.settings,
-            "interface": proc_obj.intf[-1]
+            "interface": proc_obj.intf[-1],
         }
         core_obj.python_debugger = Trepan(opts=debug_opts)
 

@@ -6,7 +6,10 @@ an event is triggered, or enter the debugger immediately.
 """
 
 import inspect
+import mathics.core.parser
+import mathics.eval.files_io.files as io_files
 import mathics.eval.tracing as tracing
+
 from mathics.core.builtin import Builtin
 from mathics.core.evaluation import Evaluation
 from mathics.core.rules import FunctionApplyRule
@@ -17,15 +20,20 @@ from pymathics.debugger.tracing import (
     apply_builtin_fn_print,
     apply_builtin_fn_traced,
     call_event_debug,
+    call_event_get,
     call_trepan3k,
 )
 
 EVENT_OPTIONS = {
     "SymPy": "False",
+    "Get": "False",
     "Numpy": "False",
     "mpmath": "False",
     "apply": "False",
+    "parse": "False",
 }
+
+parse_untraced = mathics.core.parser.parse
 
 # FIXME:
 
@@ -71,6 +79,10 @@ class DebugActivate(Builtin):
             if event_name == "mpmath":
                 tracing.run_mpmath = (
                     tracing.run_mpmath_traced if event_is_debugged else tracing.run_fast
+                )
+            elif event_name == "Get":
+                io_files.DEFAULT_TRACE_FN = (
+                    call_event_get if event_is_debugged else None
                 )
             elif event_name == "SymPy":
                 tracing.run_sympy = (
@@ -146,6 +158,10 @@ class TraceActivate(Builtin):
             if event_name == "mpmath":
                 tracing.run_mpmath = (
                     tracing.run_mpmath_traced if event_is_traced else tracing.run_fast
+                )
+            elif event_name == "Get":
+                io_files.DEAULT_TRACE_FN = (
+                    io_files.print_line_number_and_text if event_is_traced else None
                 )
             elif event_name == "SymPy":
                 tracing.run_sympy = (

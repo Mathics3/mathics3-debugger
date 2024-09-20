@@ -1,6 +1,5 @@
-from mathics.builtin.patterns import BlankSequence
+from mathics.builtin.patterns import Blank, BlankNullSequence, BlankSequence
 from mathics.core.atoms import Atom
-from mathics.core.builtin import PatternObject
 from mathics.core.element import BaseElement
 from mathics.core.expression import Expression
 from mathics.core.list import ListExpression
@@ -12,7 +11,7 @@ from mathics_pygments.lexer import MathematicaLexer
 from pygments import highlight
 from pygments.formatters import Terminal256Formatter
 
-# from mathics.core.pattern import Pattern
+# from mathics.builtin.pattern import Pattern
 
 
 mma_lexer = MathematicaLexer()
@@ -33,41 +32,37 @@ def format_element(element: BaseElement) -> str:
     elif isinstance(element, AtomPattern):
         # Should we also remove the context?
         return element.get_name()
-    elif isinstance(element, BlankSequence):
-        # print("XXX is BlankSequence")
-        if len(element.expr.elements) == 0:
-            return "_"
+    elif isinstance(element, (Blank, BlankNullSequence, BlankSequence)):
+        if isinstance(element, Blank):
+            name = "_"
+        elif isinstance(element, BlankSequence):
+            name = "__"
         else:
-            return f"_.{element.expr.elements}"
+            name = "___"
 
-    # elif isinstance(element, Blank):
-    #     # print("XXX is atom")
+        if len(element.expr.elements) == 0:
+            return name
+        else:
+            return f"{name}.{element.expr.elements}"
 
-    #     return str(element)
     elif isinstance(element, FunctionApplyRule):
-        # print("XXX is FunctionApplyRule")
         function_class = element.function.__self__.__class__
         function_name = f"{function_class.__module__}.{function_class.__name__}"
         return f"{format_element(element.pattern)} -> {function_name}()"
     elif isinstance(element, Expression):
-        # print("XXX is Expression")
         if element.head is SymbolRule:
             return f"{format_element(element.elements[0])} -> {format_element(element.elements[1])}"
         else:
             return f"{format_element(element.head)}[%s]" % (
                 ", ".join([format_element(element) for element in element.elements]),
             )
-    # elif isinstance(element, PatternObject):
-    #     return element.get_name()
     elif isinstance(element, ListExpression):
         return "{%s}" % (
             ", ".join([format_element(element) for element in element.elements]),
         )
     elif isinstance(element, ExpressionPattern):
-        # print("XXX is ExpressionPattern")
         return f"{format_element(element.expr)}"
     elif isinstance(element, Rule):
-        # print("XXX is Rule")
         return f"{format_element(element.pattern)} -> {format_element(element.replace)}"
     return str(element)
 
