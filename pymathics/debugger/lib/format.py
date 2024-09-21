@@ -1,4 +1,4 @@
-from mathics.builtin.patterns import Blank, BlankNullSequence, BlankSequence
+from mathics.builtin.patterns import Blank, BlankNullSequence, BlankSequence, OptionsPattern, Pattern
 from mathics.core.atoms import Atom
 from mathics.core.element import BaseElement
 from mathics.core.expression import Expression
@@ -30,8 +30,7 @@ def format_element(element: BaseElement) -> str:
     elif isinstance(element, Atom):
         return str(element)
     elif isinstance(element, AtomPattern):
-        # Should we also remove the context?
-        return element.get_name()
+        return element.get_name(short=True)
     elif isinstance(element, (Blank, BlankNullSequence, BlankSequence)):
         if isinstance(element, Blank):
             name = "_"
@@ -49,7 +48,7 @@ def format_element(element: BaseElement) -> str:
         function_class = element.function.__self__.__class__
         function_name = f"{function_class.__module__}.{function_class.__name__}"
         return f"{format_element(element.pattern)} -> {function_name}()"
-    elif isinstance(element, Expression):
+    elif isinstance(element, (Expression, ExpressionPattern)):
         if element.head is SymbolRule:
             return f"{format_element(element.elements[0])} -> {format_element(element.elements[1])}"
         else:
@@ -60,8 +59,15 @@ def format_element(element: BaseElement) -> str:
         return "{%s}" % (
             ", ".join([format_element(element) for element in element.elements]),
         )
-    elif isinstance(element, ExpressionPattern):
-        return f"{format_element(element.expr)}"
+    elif isinstance(element, OptionsPattern):
+        return "{%s}" % (
+            ", ".join([format_element(element) for element in element.elements]),
+        )
+    # FIXME handle other than 2 arguments...
+    elif isinstance(element, Pattern) and len(element.elements) == 2:
+        first_arg = element.elements[0]
+        second_arg = element.elements[1]
+        return f"{format_element(first_arg)}{format_element(second_arg)}"
     elif isinstance(element, Rule):
         return f"{format_element(element.pattern)} -> {format_element(element.replace)}"
     return str(element)

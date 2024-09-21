@@ -27,6 +27,11 @@ class PrintElementCommand(DebuggerCommand):
     its Python-object way.
     """
 
+    print("testing")
+    from importlib import reload
+    import pymathics
+    reload(pymathics.debugger.lib.format)
+
     aliases = ("print-element", "pexp", "pe")
     execution_set = ["Running"]
     short_help = "Print a Mathics3 Expression nicely"
