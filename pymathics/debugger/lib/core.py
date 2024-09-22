@@ -31,14 +31,11 @@ import sys
 import threading
 from typing import Any
 
-# External packages
+import mathics.eval.tracing
 import pyficache
 import tracer
 import trepan.clifns as Mclifns
-import mathics.eval.tracing
 from tracer.tracefilter import TraceFilter
-
-# Our local modules
 from trepan.lib.breakpoint import BreakpointManager
 from trepan.lib.default import START_OPTS, STOP_OPTS
 from trepan.lib.stack import count_frames
@@ -54,9 +51,7 @@ class DebuggerCore:
         # entering event processor? Zero (0) means stop at the next one.
         # A negative number indicates no eventual stopping.
         "step_ignore": 0,
-        "ignore_filter": TraceFilter(
-            [tracer, mathics.eval.tracing]
-        ),
+        "ignore_filter": TraceFilter([tracer, mathics.eval.tracing]),
     }
 
     def __init__(self, debugger, opts=None):

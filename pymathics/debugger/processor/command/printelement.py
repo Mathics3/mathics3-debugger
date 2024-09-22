@@ -27,7 +27,6 @@ class PrintElementCommand(DebuggerCommand):
     its Python-object way.
     """
 
-    print("testing")
     from importlib import reload
     import pymathics
     reload(pymathics.debugger.lib.format)

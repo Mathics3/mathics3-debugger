@@ -24,7 +24,6 @@ import shlex
 import sys
 import tempfile
 import traceback
-
 # Note: the module name pre 3.2 is repr
 from reprlib import Repr
 from typing import Tuple
@@ -44,7 +43,8 @@ from trepan.processor.cmdfns import deparse_fn
 from trepan.processor.cmdproc import get_stack
 from trepan.vprocessor import Processor
 
-from pymathics.debugger.lib.stack import format_eval_builtin_fn, is_builtin_eval_fn
+from pymathics.debugger.lib.stack import (format_eval_builtin_fn,
+                                          is_builtin_eval_fn)
 from pymathics.debugger.tracing import call_event_debug
 
 warned_file_mismatches = set()
@@ -581,16 +581,16 @@ class CommandProcessor(Processor):
             raise
         return None  # Not reached
 
-    def eval_mathics_line(self, line: str):
+    def eval_mathics_line(self, line: str, frame):
         """
         Evaluate a Mathics3 statement inside `line` and
         print result.
         """
-        if not self.curframe:
+        if frame is None:
             self.errmsg("evaluation needs a current frame")
             return
 
-        local_vars = self.curframe.f_locals
+        local_vars = frame.f_locals
 
         evaluation = local_vars.get("evaluation")
         if evaluation is None:
@@ -598,8 +598,7 @@ class CommandProcessor(Processor):
             return
 
         result = evaluation.parse_evaluate(line)
-        self.print_mathics_eval_result(result)
-        return
+        return result
 
     def exec_line(self, line):
         if self.curframe:
@@ -816,7 +815,6 @@ class CommandProcessor(Processor):
                     if self.debugger.intf[-1].output:
                         self.debugger.intf[-1].output.writeline("Leaving")
                         raise SystemExit
-                        pass
                     break
                 pass
             pass

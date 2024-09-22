@@ -78,9 +78,11 @@ class Mathics3Command(DebuggerCommand):
         evaluation = frame.f_locals.get("evaluation")
         if evaluation is None:
             self.errmsg("Cannot find evaluation object from eval frame")
+            return
 
         if not hasattr(evaluation, "definitions"):
             self.errmsg("Cannot find definitions in evaluation object")
+            return
 
         definitions = evaluation.definitions
         shell = TerminalShell(

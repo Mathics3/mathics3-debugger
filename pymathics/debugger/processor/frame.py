@@ -90,6 +90,13 @@ def adjust_frame(proc_obj, count: int, is_absolute_pos: bool, frame_type: FrameT
     trepan_adjust_frame(proc_obj, adjusted_pos, is_absolute_pos=True)
     return
 
+def find_builtin(frame):
+    while frame is not None:
+        if is_builtin_eval_fn(frame):
+            return frame
+        frame = frame.f_back
+    return None
+
 
 # TODO: add options
 def frame_complete(proc_obj, prefix, direction):

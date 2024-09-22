@@ -15,8 +15,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Our local modules
 from trepan.processor.command.base_cmd import DebuggerCommand
+from pymathics.debugger.processor.frame import find_builtin
 
 class EvalCommand(DebuggerCommand):
     """**eval** *Mathics3-statement*
@@ -25,7 +25,8 @@ class EvalCommand(DebuggerCommand):
     A variable named evaluation must be found in the current frame
     for this to work.
 
-    Use `up -b 0` to find a Python stack frame that has
+    Use `up -b 0` to find most recent Python stack fram associated with
+    eval()
 
     Examples:
     ---------
@@ -53,9 +54,15 @@ class EvalCommand(DebuggerCommand):
             text = self.proc.current_command[len(self.proc.cmd_name) :]
             pass
         text = text.strip()
+        frame = find_builtin(self.proc.curframe)
+        if frame is None:
+            self.errmsg("Cannot find an eval frame to start with")
+            return
+
         try:
-            # FIXME: reinstate
-            self.proc.eval_mathics_line(text)
+            result = self.proc.eval_mathics_line(text, frame)
+            self.proc.print_mathics_eval_result(result)
+
         except Exception:
             pass
 
