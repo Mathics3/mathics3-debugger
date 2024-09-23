@@ -17,6 +17,7 @@ from mathics.core.symbols import SymbolTrue
 
 from pymathics.debugger.tracing import (
     TraceEventNames,
+    apply_builtin_box_fn_traced,
     apply_builtin_fn_print,
     apply_builtin_fn_traced,
     call_event_debug,
@@ -24,12 +25,16 @@ from pymathics.debugger.tracing import (
     call_trepan3k,
 )
 
-EVENT_OPTIONS = {
+from typing import Dict
+
+# FIXME: DRY with debugger.tracing.TraceEventNames
+EVENT_OPTIONS: Dict[str, str] = {
     "SymPy": "False",
     "Get": "False",
     "Numpy": "False",
     "mpmath": "False",
     "apply": "False",
+    "apply_box": "False",
     "parse": "False",
 }
 
@@ -54,10 +59,12 @@ class DebugActivate(Builtin):
 
     $options$ include:
     <ul>
-      <li>'SymPy': debug SymPy calls
+      <li>'Get':  debug Get[] calls
       <li>'NumPy':  debug NumPy calls
+      <li>'SymPy': debug SymPy calls
       <li>'mpmath': debug mpmath calls
-      <li>'apply'; debug function apply calls
+      <li>'apply'; debug function apply calls that are <i>not</i> boxing routines
+      <li>'apply_box'; debug function apply calls that <i>are</i> boxing routines
     </ul>
 
     >> DebugActivate[SymPy -> True]
@@ -88,11 +95,20 @@ class DebugActivate(Builtin):
                 tracing.run_sympy = (
                     tracing.run_sympy_traced if event_is_debugged else tracing.run_fast
                 )
+
+            # FIXME: we need to fold in whether to track boxing or not into
+            # apply_function(). As things stand now the single monkey-patched routine
+            # is clobbered by apply_box below
             elif event_name == "apply":
                 FunctionApplyRule.apply_function = (
                     apply_builtin_fn_traced if event_is_debugged else EVALUATION_APPLY
                 )
 
+            # FIXME: see above.
+            # elif event_name == "apply_box":
+            #     FunctionApplyRule.apply_function = (
+            #         apply_builtin_box_fn_traced if event_is_debugged else EVALUATION_APPLY
+            #     )
 
 class Debugger(Builtin):
     """
@@ -166,6 +182,10 @@ class TraceActivate(Builtin):
             elif event_name == "SymPy":
                 tracing.run_sympy = (
                     tracing.run_sympy_traced if event_is_traced else tracing.run_fast
+                )
+            elif event_name == "apply":
+                FunctionApplyRule.apply_function = (
+                    apply_builtin_fn_print if event_is_traced else EVALUATION_APPLY
                 )
             elif event_name == "apply":
                 FunctionApplyRule.apply_function = (

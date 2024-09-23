@@ -35,6 +35,7 @@ import mathics.eval.tracing
 import pyficache
 import tracer
 import trepan.clifns as Mclifns
+# from mathics.eval.tracing import ReturnChanged
 from tracer.tracefilter import TraceFilter
 from trepan.lib.breakpoint import BreakpointManager
 from trepan.lib.default import START_OPTS, STOP_OPTS
@@ -351,6 +352,7 @@ class DebuggerCore:
         # do we have one?
         lineno = frame.f_lineno
         filename = frame.f_code.co_filename
+
         if self.different_line and event == "line":
             if self.last_lineno == lineno and self.last_filename == filename:
                 return False
@@ -400,6 +402,9 @@ class DebuggerCore:
         different line). We could put that here, but since that seems
         processor-specific I think it best to distribute the checks."""
 
+        if self.ignore_filter and self.ignore_filter.is_excluded(frame):
+            return self
+
         # For now we only allow one instance in a process
         # In Python 2.6 and beyond one can use "with threading.Lock():"
         try:
@@ -409,16 +414,6 @@ class DebuggerCore:
                 return None
 
             self.event = event
-            # FIXME: Understand what's going on here better.
-            # When None gets returned, the frame's f_trace seems to get set
-            # to None. Somehow this is changing other frames when get passed
-            # to this routine which also have their f_trace set to None.
-            # This will disallow a command like "jump" from working properly,
-            # which will give a cryptic the message on setting f_lineno:
-            #   f_lineno can only be set by a trace function
-            if self.ignore_filter and self.ignore_filter.is_excluded(frame):
-                return self
-
             if self.debugger.settings["trace"]:
                 print_event_set = self.debugger.settings["printset"]
                 if self.event in print_event_set:
@@ -437,6 +432,8 @@ class DebuggerCore:
 
             # Todo: Run conditionally?
             return self.processor.event_processor(frame, self.event, arg)
+        # except ReturnChanged:
+        #     raise
         finally:
             try:
                 self.debugger_lock.release()

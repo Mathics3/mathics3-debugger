@@ -40,10 +40,10 @@ def eval_loop(shell):
             if result is not None:
                 shell.print_result(result, strict_wl_output=False)
         except KeyboardInterrupt:
-            print("\nKeyboardInterrupt")
+            print("\nKeyboardInterrupt - returning to Mathics3 Debug... ")
             break
         except EOFError:
-            print("\n\nGoodbye!\n")
+            print("\nReturning to Mathics3 Debug...\n")
             break
         except SystemExit:
             print("\n\nGoodbye!\n")

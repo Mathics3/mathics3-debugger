@@ -1,22 +1,36 @@
 import inspect
+import re
 from enum import Enum
 from typing import Callable
-from trepan.debugger import Trepan
 
 import mathics.eval.tracing as eval_tracing
+from mathics.core.evaluation import Evaluation
 from mathics.core.symbols import strip_context
+from trepan.debugger import Trepan
+
 from pymathics.debugger.lib.format import format_element, pygments_format
 
-TraceEventNames = ("SymPy", "Numpy", "mpmath", "apply", "debugger", "Get", "parse")
+TraceEventNames = (
+    "Debugger",  # a direct call to Debugger[]
+    "Get",   # Get[] builtin call
+    "Numpy", # traps calls to Numpy functions
+    "SymPy", # traps calls to SymPy functions
+    "apply", # applying a function that is *not* a Boxing function
+    "apply_box", # applying a function that *is* a Boxing function
+    "mpmath", # traps calls to mpmath functions
+    "parse", # traps calls to parse()
+)
 TraceEvent = Enum("TraceEvent", TraceEventNames)
 
 
 dbg = None
 
 
-def apply_builtin_fn_traced(self, expression, vars, options: dict, evaluation):
+def apply_builtin_fn_traced_common(
+    self, expression, vars, options: dict, evaluation, trace_boxing: bool
+):
     """
-    Run debugger on a builtin function call.
+    Common routine to trace debugger on a Mathics apply function.
     """
     vars_noctx = dict(((strip_context(s), vars[s]) for s in vars))
     if self.pass_expression:
@@ -26,7 +40,11 @@ def apply_builtin_fn_traced(self, expression, vars, options: dict, evaluation):
         if not self.check_options(options, evaluation):
             return None
 
-    if eval_tracing.hook_entry_fn is not None:
+    if (
+        eval_tracing.hook_entry_fn is not None
+        and bool(re.match("^System`[A-Z][A-Za-z0-9]+Box", expression.head.name))
+        == trace_boxing
+    ):
         args = (self, expression, vars, options, evaluation)
         skip_call = eval_tracing.hook_entry_fn(TraceEvent.apply, *args)
     else:
@@ -39,7 +57,27 @@ def apply_builtin_fn_traced(self, expression, vars, options: dict, evaluation):
             return self.function(evaluation=evaluation, **vars_noctx)
 
 
-def apply_builtin_fn_print(self, expression, vars, options: dict, evaluation):
+def apply_builtin_box_fn_traced(
+    self, expression, vars, options: dict, evaluation: Evaluation
+):
+    """Trace or debug an apply function that is a Boxing apply"""
+    return self.apply_builtin_fn_traced_common(
+        expression, vars, options, evaluation, True
+    )
+
+
+def apply_builtin_fn_traced(
+    self, expression, vars, options: dict, evaluation: Evaluation
+):
+    """Trace or debug an apply function that is not a Boxing apply"""
+    return apply_builtin_fn_traced_common(
+        self, expression, vars, options, evaluation, False
+    )
+
+
+def apply_builtin_fn_print(
+    self, expression, vars, options: dict, evaluation: Evaluation
+):
     """
     Run debugger on a builtin function call.
     """
