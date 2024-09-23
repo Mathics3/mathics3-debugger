@@ -55,15 +55,15 @@ def eval_loop(shell):
 
 
 class Mathics3Command(DebuggerCommand):
-    """**mathics**
+    """**mathics3**
 
-    Fork a new Mathics session using the existing definitions
+    Fork a new Mathics3 session using the existing definitions
     """
 
-    aliases = ("mathics3", "Mathics3")
+    aliases = ("mathics", "Mathics3")
     short_help = "Run Python as a command subshell"
 
-    DebuggerCommand.setup(locals(), category="data", max_args=1)
+    DebuggerCommand.setup(locals(), category="data", max_args=0, min_args=0)
 
     def run(self, args):
 
