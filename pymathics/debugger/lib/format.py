@@ -48,6 +48,12 @@ def format_element(element: BaseElement) -> str:
         function_class = element.function.__self__.__class__
         function_name = f"{function_class.__module__}.{function_class.__name__}"
         return f"{format_element(element.pattern)} -> {function_name}()"
+    # Note ListExpresion test has to come before Expression test since
+    # ListExpression is a subclass of Expression
+    elif isinstance(element, ListExpression):
+        return "{%s}" % (
+            ", ".join([format_element(element) for element in element.elements]),
+        )
     elif isinstance(element, (Expression, ExpressionPattern)):
         if element.head is SymbolRule:
             return f"{format_element(element.elements[0])} -> {format_element(element.elements[1])}"
@@ -55,10 +61,6 @@ def format_element(element: BaseElement) -> str:
             return f"{format_element(element.head)}[%s]" % (
                 ", ".join([format_element(element) for element in element.elements]),
             )
-    elif isinstance(element, ListExpression):
-        return "{%s}" % (
-            ", ".join([format_element(element) for element in element.elements]),
-        )
     elif isinstance(element, OptionsPattern):
         return "{%s}" % (
             ", ".join([format_element(element) for element in element.elements]),

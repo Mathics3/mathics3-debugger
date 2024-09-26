@@ -32,7 +32,6 @@ class PrintElementCommand(DebuggerCommand):
     reload(pymathics.debugger.lib.format)
 
     aliases = ("print-element", "pexp", "pe")
-    execution_set = ["Running"]
     short_help = "Print a Mathics3 Expression nicely"
     DebuggerCommand.setup(locals(), category="running", max_args=1, need_stack=True)
 
