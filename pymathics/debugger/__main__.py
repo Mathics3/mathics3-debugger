@@ -59,7 +59,7 @@ class DebugActivate(Builtin):
 
     $options$ include:
     <ul>
-      <li>'Get':  debug Get[] calls
+      <li>'Get':  debug Get[] calls, with Trace->True set
       <li>'NumPy':  debug NumPy calls
       <li>'SymPy': debug SymPy calls
       <li>'mpmath': debug mpmath calls
@@ -88,8 +88,8 @@ class DebugActivate(Builtin):
                     tracing.run_mpmath_traced if event_is_debugged else tracing.run_fast
                 )
             elif event_name == "Get":
-                io_files.DEFAULT_TRACE_FN = (
-                    call_event_get if event_is_debugged else None
+                io_files.GET_PRINT_FN = (
+                    call_event_get if event_is_debugged else io_files.print_line_number_and_text
                 )
             elif event_name == "SymPy":
                 tracing.run_sympy = (
