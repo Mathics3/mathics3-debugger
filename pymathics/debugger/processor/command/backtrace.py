@@ -26,8 +26,6 @@ class BacktraceCommand(DebuggerCommand):
 
     Print backtrace of all stack frames, or innermost *count* frames.
 
-    With a negative argument, print outermost -*count* frames.
-
     An arrow indicates the 'current frame'. The current frame determines
     the context used for many debugger commands such as expression
     evaluation or source-line listing.
