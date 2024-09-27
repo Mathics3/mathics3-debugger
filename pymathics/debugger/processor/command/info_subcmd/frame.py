@@ -17,12 +17,11 @@
 import inspect
 
 # Our local modules
+from pymathics.debugger.lib.format import pygments_format
 from trepan.processor.command import base_subcmd as Mbase_subcmd
 from trepan.lib.complete import complete_token
 from trepan.processor import frame as Mframe
-from pymathics.debugger.lib.stack import format_eval_builtin_fn
-
-from pymathics.debugger.lib.stack import is_builtin_eval_fn
+from pymathics.debugger.lib.stack import format_eval_builtin_fn, is_builtin_eval_fn, format_frame_self_arg
 
 
 class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
@@ -73,11 +72,13 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
             self.errmsg("No frame selected.")
             return False
 
-        is_verbose = False
         if len(args) >= 1 and args[0] == "-v":
             args.pop(0)
             is_verbose = True
+        else:
+            is_verbose = False
 
+        style = self.settings["style"]
         frame_num = None
         if len(args) == 1:
             try:
@@ -117,16 +118,26 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
 
         if is_builtin_eval_fn(frame):
             formatted_function_str = format_eval_builtin_fn(
-                frame, style=self.settings["style"]
+                frame, style=style
             )
-            self.msg("  " + formatted_function_str)
+            self.msg(f"  {formatted_function_str}")
+        else:
+            # FIXME use a function in to get and format this
+            self.msg(f"  function_name: {frame.f_code.co_name}")
+
+            func_args, _, _, _ = inspect.getargvalues(frame)
+            self_arg_mathics_formatted = format_frame_self_arg(frame, func_args, proc.debugger,
+                                                               style = style)
+            if self_arg_mathics_formatted is not None:
+                mathics_self = pygments_format(self_arg_mathics_formatted, style=style)
+                self.msg(f"  self: {mathics_self}")
 
         if hasattr(frame, "f_restricted"):
             self.msg(f"  restricted execution: {frame.f_restricted}")
 
         if is_verbose:
             self.msg(f"  current line number: {frame.f_lineno}")
-            self.msg("  last instruction: {frame.f_lasti}")
+            self.msg(f"  last instruction: {frame.f_lasti}")
             self.msg(f"  code: {frame.f_code}")
 
         self.msg(f"  previous frame: {frame.f_back}")

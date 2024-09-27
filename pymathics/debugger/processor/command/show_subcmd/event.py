@@ -67,11 +67,13 @@ class ShowEvent(DebuggerSubcommand):
                 return
 
             if event_name == "Get":
-                trace_fn = io_files.DEFAULT_TRACE_FN
+                trace_fn = io_files.GET_PRINT_FN
                 if trace_fn is None:
                     status = "off"
                 elif trace_fn == call_event_get:
                     status = "debug"
+                elif trace_fn == io_files.print_line_number_and_text:
+                    status = "trace"
                 else:
                     status = str(trace_fn)
             elif event_name == "SymPy":

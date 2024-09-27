@@ -14,7 +14,8 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Our local modules
+import mathics.eval.files_io.files as io_files
+
 from trepan.processor.command.base_subcmd import DebuggerSubcommand
 
 import mathics.eval.tracing as tracing
@@ -25,6 +26,7 @@ from pymathics.debugger.tracing import (
     apply_builtin_fn_traced,
     apply_builtin_fn_print,
     call_event_debug,
+    call_event_get,
 )
 from mathics.core.rules import FunctionApplyRule
 
@@ -78,7 +80,15 @@ class SetEvent(DebuggerSubcommand):
                 self.errmsg(f"set events: expecting argument: 'on', 'off', 'trace' or 'debug'; got: '{on_off}'")
                 return
 
-            if event_name in ("SymPy", "all"):
+            if event_name in ("Get", "all"):
+                if on_off in ("on", "debug"):
+                    io_files.GET_PRINT_FN = call_event_get
+                elif on_off == "trace":
+                    io_files.GET_PRINT_FN = io_files.print_line_number_and_text
+                else:
+                    io_files.GET_PRINT_FN = None
+
+            elif event_name in ("SymPy", "all"):
                 if on_off in ("on", "debug"):
                     tracing.hook_entry_fn = call_event_debug
                     tracing.run_sympy = tracing.run_sympy_traced

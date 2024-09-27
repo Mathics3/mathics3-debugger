@@ -1,4 +1,10 @@
-from mathics.builtin.patterns import Blank, BlankNullSequence, BlankSequence, OptionsPattern, Pattern
+from mathics.builtin.patterns import (
+    Blank,
+    BlankNullSequence,
+    BlankSequence,
+    OptionsPattern,
+    Pattern,
+)
 from mathics.core.atoms import Atom
 from mathics.core.element import BaseElement
 from mathics.core.expression import Expression
@@ -42,13 +48,16 @@ def format_element(element: BaseElement) -> str:
         if len(element.expr.elements) == 0:
             return name
         else:
-            return f"{name}.{element.expr.elements}"
+            return (
+                f"{name}"
+                f"{', '.join([format_element(element) for element in element.elements])}"
+            )
 
     elif isinstance(element, FunctionApplyRule):
         function_class = element.function.__self__.__class__
         function_name = f"{function_class.__module__}.{function_class.__name__}"
         return f"{format_element(element.pattern)} -> {function_name}()"
-    # Note ListExpresion test has to come before Expression test since
+    # Note ListExpression test has to come before Expression test since
     # ListExpression is a subclass of Expression
     elif isinstance(element, ListExpression):
         return "{%s}" % (

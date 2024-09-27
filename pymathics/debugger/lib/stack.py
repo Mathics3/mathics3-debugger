@@ -19,15 +19,25 @@
 import inspect
 import os.path as osp
 
+from typing import Optional, Tuple
 from trepan.lib.format import (
     Arrow,
+    Function,
     format_token,
 )
 
-from trepan.lib.stack import format_stack_entry
+from trepan.lib.stack import (
+    format_function_name,
+    format_return_and_location,
+    get_call_function_name,
+    is_exec_stmt,
+)
 from mathics.core.builtin import Builtin
+from mathics.core.element import BaseElement
 from mathics.core.expression import Expression
-from pymathics.debugger.lib.format import pygments_format
+from mathics.core.pattern import ExpressionPattern
+from pymathics.debugger.lib.format import format_element, pygments_format
+
 
 def count_frames(frame, count_start=0):
     """Return a count of the number of frames"""
@@ -36,6 +46,101 @@ def count_frames(frame, count_start=0):
         count += 1
         frame = frame.f_back
     return count
+
+
+def format_frame_self_arg(
+    frame, args, debugger, style: str
+) -> Tuple[str, Optional[str]]:
+    """If there is a "self" argument and it is is a Mathics3 kind of
+    object, format that separately as its Mathics3 representation (as
+    opposed to how it looks in Python).
+    """
+    self_arg = frame.f_locals.get("self", None)
+    if self_arg is None:
+        return None
+    if (
+        len(args) > 0
+        and args[0] == "self"
+        and isinstance(self_arg, (BaseElement, ExpressionPattern))
+    ):
+        self_arg_mathics_formatted = format_element(self_arg)
+    else:
+        self_arg_mathics_formatted = None
+
+    return self_arg_mathics_formatted
+
+
+def format_function_and_parameters(frame, debugger, style: str) -> Tuple[bool, str]:
+    """
+    format the function found in frame along with its paramter. This is passed back as a string.
+    The style to used is given by ``style``; style "none" means do not style.
+    We also pass back wither the frame function is a module-level function.
+    """
+
+    funcname, s = format_function_name(frame, style)
+    args, varargs, varkw, local_vars = inspect.getargvalues(frame)
+    if "<module>" == funcname and (
+        [],
+        None,
+        None,
+    ) == (
+        args,
+        varargs,
+        varkw,
+    ):
+        is_module = True
+        if is_exec_stmt(frame):
+            fn_name = format_token(Function, "exec", style=style)
+            s += f" {format_token(Function, fn_name, style=style)}(...)"
+        else:
+            # FIXME: package the below as a function in trepan3k
+            fn_name = get_call_function_name(frame)
+            if fn_name:
+                if fn_name:
+                    s += f" {format_token(Function, fn_name, style=style)}({...})"
+            pass
+    else:
+        is_module = False
+        self_arg_mathics_formatted = format_frame_self_arg(frame, args, debugger, style)
+
+        if self_arg_mathics_formatted is not None:
+            args = args[1:]
+
+        try:
+            params = inspect.formatargvalues(args, varargs, varkw, local_vars)
+        except Exception:
+            pass
+        else:
+            maxargstrsize = debugger.settings["maxargstrsize"]
+            param_len = len(params)
+            if self_arg_mathics_formatted is not None:
+                if len(self_arg_mathics_formatted) > maxargstrsize:
+                    self_arg_mathics_formatted = (
+                        f"{self_arg_mathics_formatted[0:maxargstrsize]}...)"
+                    )
+                if param_len > 0:
+                    if params[0] == "(":
+                        params = params[1:]
+                    # We have to do this before pygments_format so that it appears before a \n'
+                    self_arg_mathics_formatted += ","
+                first_param = "(" + pygments_format(
+                    self_arg_mathics_formatted, style=style
+                )
+                if param_len > 0:
+                    first_param += "\t"
+                    pass
+            else:
+                first_param = ""
+
+            # Tack on first argument if there is one
+            if len(params) >= maxargstrsize:
+                params = f"{params[0:maxargstrsize]}...)"
+
+            params = f"{first_param}{params}"
+            s += params
+        pass
+
+    return is_module, s
 
 
 def format_eval_builtin_fn(frame, style: str) -> str:
@@ -59,6 +164,33 @@ def format_eval_builtin_fn(frame, style: str) -> str:
 
     call_string = f"{builtin_name}[{args_pattern}]"
     return f"{pygments_format(call_string, style)}"
+
+
+def format_stack_entry(
+    dbg_obj, frame_lineno, lprefix=": ", include_location=True, style="none"
+) -> str:
+    """Format and return a stack entry gdb-style.
+    Note: lprefix is not used. It is kept for compatibility.
+    """
+    frame, line_number = frame_lineno
+
+    if is_builtin_eval_fn(frame):
+        s = format_eval_builtin_fn(frame, style=style)
+        s += "    "
+        is_module = False
+    else:
+        is_module, s = format_function_and_parameters(frame, dbg_obj, style)
+        args, varargs, varkw, local_vars = inspect.getargvalues(frame)
+
+        # Note: ddd can't handle wrapped stack entries (yet).
+        # The 35 is hoaky though. FIXME.
+        if len(s) >= 35:
+            s += "\n    "
+
+    s += format_return_and_location(
+        frame, line_number, dbg_obj, is_module, include_location, style
+    )
+    return s
 
 
 def is_builtin_eval_fn(frame) -> bool:
