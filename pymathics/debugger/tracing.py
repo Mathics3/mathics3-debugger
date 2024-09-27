@@ -160,6 +160,11 @@ def call_event_get(line_number: int, text: str) -> bool:
         current_frame = current_frame.f_back
 
     dbg.core.execution_status = "Running"
+    msg_fn = dbg.core.processor.rst_msg
+    if line_number == 0:
+        msg_fn(f"**Reading** **file**: {text}")
+    else:
+        msg_fn("%5d: %s" % (line_number, text.rstrip()))
     dbg.core.trace_dispatch(current_frame, "Get", (line_number, text))
 
     return False
