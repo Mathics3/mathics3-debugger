@@ -16,12 +16,19 @@
 
 import inspect
 
+from pyficache import getline, highlight_string
+
 # Our local modules
 from pymathics.debugger.lib.format import pygments_format
 from trepan.processor.command import base_subcmd as Mbase_subcmd
 from trepan.lib.complete import complete_token
+from trepan.lib.stack import format_function_name
 from trepan.processor import frame as Mframe
-from pymathics.debugger.lib.stack import format_eval_builtin_fn, is_builtin_eval_fn, format_frame_self_arg
+from pymathics.debugger.lib.stack import (
+    format_eval_builtin_fn,
+    is_builtin_eval_fn,
+    format_frame_self_arg,
+)
 
 
 class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
@@ -117,20 +124,32 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
         self.section(mess)
 
         if is_builtin_eval_fn(frame):
-            formatted_function_str = format_eval_builtin_fn(
-                frame, style=style
-            )
+            formatted_function_str = format_eval_builtin_fn(frame, style=style)
             self.msg(f"  {formatted_function_str}")
         else:
-            # FIXME use a function in to get and format this
-            self.msg(f"  function_name: {frame.f_code.co_name}")
+            function_name, formatted_func_name = format_function_name(frame, style)
+            self.msg(f"  function name: {formatted_func_name}")
 
-            func_args, _, _, _ = inspect.getargvalues(frame)
-            self_arg_mathics_formatted = format_frame_self_arg(frame, func_args, proc.debugger,
-                                                               style = style)
+            f_args, f_varargs, f_keywords, f_locals = inspect.getargvalues(frame)
+            func_args = inspect.formatargvalues(f_args, f_varargs, f_keywords, f_locals)
+            formatted_func_signature = highlight_string(func_args, style=style).strip()
+
+            self_arg_mathics_formatted = format_frame_self_arg(
+                frame, func_args, proc.debugger, style=style
+            )
             if self_arg_mathics_formatted is not None:
                 mathics_self = pygments_format(self_arg_mathics_formatted, style=style)
                 self.msg(f"  self: {mathics_self}")
+
+            self.msg(f"  function args: {formatted_func_signature}")
+            line_number = frame.f_lineno
+            code = frame.f_code
+            file_path = code.co_filename
+            line_text = getline(file_path, line_number, {"style": style}).strip()
+            short_line_text = proc._saferepr(line_text)[1:-1]
+            formatted_text = highlight_string(proc._saferepr(short_line_text))
+            self.msg(f"  current line number: {frame.f_lineno}: {formatted_text}")
+
 
         if hasattr(frame, "f_restricted"):
             self.msg(f"  restricted execution: {frame.f_restricted}")
@@ -141,9 +160,9 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
             self.msg(f"  code: {frame.f_code}")
 
         self.msg(f"  previous frame: {frame.f_back}")
-        self.msg(f"  tracing function: {frame.f_trace}")
 
         if is_verbose:
+            self.msg(f"  tracing function: {frame.f_trace}")
             for name, field in [
                 ("Globals", "f_globals"),
                 ("Builtins", "f_builtins"),
