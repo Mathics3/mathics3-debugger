@@ -21,6 +21,12 @@ from pymathics.debugger.processor.command.up import UpCommand
 class DownCommand(UpCommand):
     """**down** [*count*]
 
+    *options* are:
+
+       -h | --help    - give this help
+       -b | --builtin - show Mathics3 builtin methods
+       -e | --expr    - show Mathics3 Expressions
+
       Move the current frame down in the stack trace (to a newer frame). 0
       is the most recent frame. If no count is given, move down 1.
 
