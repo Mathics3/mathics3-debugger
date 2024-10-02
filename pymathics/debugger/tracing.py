@@ -10,6 +10,9 @@ from trepan.debugger import Trepan
 
 from pymathics.debugger.lib.format import format_element, pygments_format
 
+from typing import Dict, List
+
+
 TraceEventNames = (
     "Debugger",  # a direct call to Debugger[]
     "Get",   # Get[] builtin call
@@ -21,6 +24,21 @@ TraceEventNames = (
     "parse", # traps calls to parse()
 )
 TraceEvent = Enum("TraceEvent", TraceEventNames)
+
+# Event filtering masks. An empty list
+# means not filtering. To remove filtering
+# though set the event to False.
+# Setting an event to True force the last
+# set of filters to go into effect.
+#
+event_filters: Dict[str, List[str]] = {
+    "Get": [],
+    "Numpy": [],
+    "SymPy": [],
+    "apply": [],
+    "apply_box": [],
+    "mpmath": [],
+    }
 
 
 dbg = None
@@ -140,7 +158,7 @@ def call_event_debug(event: TraceEvent, fn: Callable, *args) -> bool:
     # Remove any "Tracing." from event string.
     event_str = str(event).split(".")[-1]
     dbg.core.execution_status = "Running"
-    dbg.core.trace_dispatch(current_frame, event_str, args)
+    dbg.core.trace_dispatch(current_frame, event_str, (fn, args))
 
     return False
 
@@ -165,7 +183,13 @@ def call_event_get(line_number: int, text: str) -> bool:
         msg_fn(f"**Reading** **file**: {text}")
     else:
         msg_fn("%5d: %s" % (line_number, text.rstrip()))
-    dbg.core.trace_dispatch(current_frame, "Get", (line_number, text))
+    f_locals = current_frame.f_locals
+    if "path" in f_locals:
+        file_path = f_locals["path"]
+    else:
+        f_locals = current_frame.f_back.f_locals
+        file_path = f_locals["feeder"].filename
+    dbg.core.trace_dispatch(current_frame, "Get", (file_path, (line_number, text)))
 
     return False
 

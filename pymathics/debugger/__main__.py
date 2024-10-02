@@ -12,6 +12,7 @@ import mathics.eval.tracing as tracing
 
 from mathics.core.builtin import Builtin
 from mathics.core.evaluation import Evaluation
+from mathics.core.list import ListExpression
 from mathics.core.rules import FunctionApplyRule
 from mathics.core.symbols import SymbolTrue
 
@@ -23,6 +24,7 @@ from pymathics.debugger.tracing import (
     call_event_debug,
     call_event_get,
     call_trepan3k,
+    event_filters
 )
 
 from typing import Dict
@@ -78,11 +80,20 @@ class DebugActivate(Builtin):
     def eval(self, evaluation: Evaluation, options: dict):
         "DebugActivate[OptionsPattern[DebugActivate]]"
         for event_name in TraceEventNames:
+            if event_name == "Debugger":
+                continue
             option = self.get_option(options, event_name, evaluation)
-            event_is_debugged = option == SymbolTrue
+            if option is None:
+                evaluation.message("DebugActivate", "options", event_name)
+                return
+
+            event_is_debugged = (option == SymbolTrue or isinstance(option, ListExpression))
             if event_is_debugged:
                 tracing.hook_entry_fn = call_event_debug
                 tracing.hook_exit_fn = tracing.return_event_print
+                if isinstance(option, ListExpression):
+                    event_filters[event_name] = [opt.value for opt in option.elements]
+
             if event_name == "mpmath":
                 tracing.run_mpmath = (
                     tracing.run_mpmath_traced if event_is_debugged else tracing.run_fast
@@ -109,6 +120,7 @@ class DebugActivate(Builtin):
             #     FunctionApplyRule.apply_function = (
             #         apply_builtin_box_fn_traced if event_is_debugged else EVALUATION_APPLY
             #     )
+        print("XXX", event_filters)
 
 class Debugger(Builtin):
     """

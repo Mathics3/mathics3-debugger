@@ -35,13 +35,13 @@ import mathics.eval.tracing
 import pyficache
 import tracer
 import trepan.clifns as Mclifns
-# from mathics.eval.tracing import ReturnChanged
 from tracer.tracefilter import TraceFilter
 from trepan.lib.breakpoint import BreakpointManager
 from trepan.lib.default import START_OPTS, STOP_OPTS
 from trepan.lib.stack import count_frames
 from trepan.misc import option_set
 
+from pymathics.debugger.tracing import event_filters
 from pymathics.debugger.processor.cmdproc import CommandProcessor
 
 
@@ -431,7 +431,30 @@ class DebuggerCore:
                 return self
 
             # Todo: Run conditionally?
-            return self.processor.event_processor(frame, self.event, arg)
+            event_filter = event_filters.get(event)
+            if event_filter is not None:
+                if event == "mpmath" and event_filter:
+                    bound_mpmath_method, call_args = arg
+                    mpmath_name = bound_mpmath_method.__func__.__name__
+                    # If we have any mpmmath event filters listed, check that
+                    # mpmath_name on of the names listed.
+                    if mpmath_name not in event_filter and event_filter:
+                        return
+                    pass
+                elif event == "SymPy":
+                    sympy_function, call_args = arg
+                    sympy_name = sympy_function.__name__
+                    # If we have any SymPy event filters listed, check that
+                    # sympy_name on of the names listed.
+                    if sympy_name not in event_filter and event_filter:
+                        return
+                elif event == "Get":
+                    file_path, call_args = arg
+                    if file_path not in event_filter and event_filter:
+                        return
+
+
+            return self.processor.event_processor(frame, event, arg)
         # except ReturnChanged:
         #     raise
         finally:

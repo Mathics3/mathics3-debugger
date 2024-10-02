@@ -163,7 +163,8 @@ def format_eval_builtin_fn(frame, style: str) -> str:
     )
 
     call_string = f"{builtin_name}[{args_pattern}]"
-    return f"{pygments_format(call_string, style)}"
+    formatted_call_string = pygments_format(call_string, style).strip()
+    return formatted_call_string
 
 
 def format_stack_entry(
@@ -246,7 +247,7 @@ def print_builtin_stack(proc_obj, count: int, style="none"):
     n = len(proc_obj.stack)
     for i in range(n):
         frame_lineno = proc_obj.stack[len(proc_obj.stack) - i - 1]
-        frame = frame_lineno[0]
+        frame, line_number = frame_lineno
         if is_builtin_eval_fn(frame):
             if frame is proc_obj.curframe:
                 intf.msg_nocr(format_token(Arrow, "B>", style=style))
@@ -256,8 +257,9 @@ def print_builtin_stack(proc_obj, count: int, style="none"):
             intf.msg(f"{stack_nums} {format_eval_builtin_fn(frame, style=style)}")
             intf.msg(
                 " " * (4 + len(stack_nums))
-                + format_stack_entry(proc_obj.debugger, frame_lineno, style=style)
-            )
+                + format_return_and_location(
+                    frame, line_number, proc_obj.debugger, False, True, style
+                     ))
             j += 1
             if j >= count:
                 break
