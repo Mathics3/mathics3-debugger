@@ -1,10 +1,5 @@
-from mathics.builtin.patterns import (
-    Blank,
-    BlankNullSequence,
-    BlankSequence,
-    OptionsPattern,
-    Pattern,
-)
+from mathics.builtin.patterns.basic import Blank, BlankNullSequence, BlankSequence
+from mathics.builtin.patterns.composite import Pattern, OptionsPattern
 from mathics.core.atoms import Atom
 from mathics.core.element import BaseElement
 from mathics.core.expression import Expression
