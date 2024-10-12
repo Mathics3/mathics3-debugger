@@ -398,7 +398,9 @@ class CommandProcessor(Processor):
         self.continue_running = False  # True if we should leave command loop
         self.event2short = dict(EVENT2SHORT)
         self.event2short["signal"] = "?!"
-        self.event2short["apply"] = "fn"
+        self.event2short["apply"] = "@@"
+        self.event2short["evalMethod"] = "@m"
+        self.event2short["evalFunction"] = "@f"
         self.event2short["brkpt"] = "xx"
         self.event2short["debugger"] = "$ "
         self.event2short["mpmath"] = "mp"

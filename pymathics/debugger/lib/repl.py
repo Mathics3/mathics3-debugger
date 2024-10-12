@@ -62,11 +62,12 @@ class DebugREPL:
         self.eval_string = None
         self.settings = DEBUGGER_SETTINGS.copy()
         self.settings["events"] = {
-            "debugger",  # explicit call via "Debugger"
-            "mpmath",  # mpmath call
             "Get",  # Get[]
             "SymPy",  # SymPy call
-            "apply"  # Builtin function call
+            "apply",  # Builtin function call
+            "evalMethod", # calling a builti-in evaluation method Class.eval_xxx()
+            "debugger",  # explicit call via "Debugger"
+            "mpmath",  # mpmath call
             }
         self.settings["style"] = default_style
 
