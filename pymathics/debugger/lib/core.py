@@ -430,7 +430,6 @@ class DebuggerCore:
             if trace_event_set is None or self.event not in trace_event_set:
                 return self
 
-            # Todo: Run conditionally?
             event_filter = event_filters.get(event)
             if event_filter is not None:
                 if event == "mpmath" and event_filter:

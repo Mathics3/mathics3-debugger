@@ -5,6 +5,7 @@ from typing import Callable
 
 import mathics.eval.tracing as eval_tracing
 from mathics.core.evaluation import Evaluation
+from mathics.core.rules import FunctionApplyRule
 from mathics.core.symbols import strip_context
 from trepan.debugger import Trepan
 
@@ -15,13 +16,15 @@ from typing import Dict, List
 
 TraceEventNames = (
     "Debugger",  # a direct call to Debugger[]
-    "Get",   # Get[] builtin call
-    "Numpy", # traps calls to Numpy functions
-    "SymPy", # traps calls to SymPy functions
-    "apply", # applying a function that is *not* a Boxing function
-    "apply_box", # applying a function that *is* a Boxing function
-    "mpmath", # traps calls to mpmath functions
-    "parse", # traps calls to parse()
+    "Get",  # Get[] builtin call
+    "Numpy",  # traps calls to Numpy functions
+    "SymPy",  # traps calls to SymPy functions
+    "apply",  # applying a function that is *not* a Boxing function
+    "applyBox",  # applying a function that *is* a Boxing function
+    "evalMethod",  # calling a builti-in evaluation method Class.eval_xxx()
+    "evalFunction",  # calling an evaluation  eval_Xxx() of mathics.eval
+    "mpmath",  # traps calls to mpmath functions
+    "parse",  # traps calls to parse()
 )
 TraceEvent = Enum("TraceEvent", TraceEventNames)
 
@@ -36,12 +39,16 @@ event_filters: Dict[str, List[str]] = {
     "Numpy": [],
     "SymPy": [],
     "apply": [],
-    "apply_box": [],
+    "applyBox": [],
+    "evalMethod": [],
+    "evalFunction": [],
     "mpmath": [],
-    }
+}
 
 
 dbg = None
+
+saved_methods: Dict[str, Callable] = {}
 
 
 def apply_builtin_fn_traced_common(
@@ -165,7 +172,7 @@ def call_event_debug(event: TraceEvent, fn: Callable, *args) -> bool:
 
 def call_event_get(line_number: int, text: str) -> bool:
     """
-    A somewhat generic function to show an event-traced call.
+    Event dispatch wrapper function for Get (<<).
     """
     global dbg
     if dbg is None:
@@ -212,4 +219,56 @@ def call_trepan3k(proc_obj):
     python_core_obj.execution_status = "Running"
     python_core_obj.processor.event_processor(proc_obj.curframe, event, None)
     print("call done")
+    return
+
+
+def traced_eval_method(method_name: str, *args, **kwargs):
+    global dbg
+    if dbg is None:
+        from pymathics.debugger.lib.repl import DebugREPL
+
+        dbg = DebugREPL()
+
+    current_frame = inspect.currentframe()
+    if current_frame is not None:
+        current_frame = current_frame.f_back
+        if current_frame is not None:
+            current_frame = current_frame.f_back
+
+    dbg.core.execution_status = "Running"
+    dbg.core.trace_dispatch(current_frame, "evalMethod", (*args, *kwargs))
+    method = saved_methods.get(method_name)
+    if method is not None:
+        return method(*args, **kwargs)
+
+
+def pre_evaluation_debugger_hook(query, evaluation: Evaluation):
+    """
+    A debugger pre-evaluation hook that allows us to
+    alter `evaluation` functions so we can debug or trace them
+    """
+    print("Pre evaluation hook called")
+    for method in event_filters["evalMethod"]:
+        if method == "message":
+            if saved_methods.get(method) is None:
+                saved_methods[method] = evaluation.message
+            evaluation.message = traced_eval_method
+        else:
+            definition = evaluation.definitions.get_definition(
+                method, only_if_exists=True
+            )
+            if definition is not None:
+                for value in definition.downvalues:
+                    if isinstance(value, FunctionApplyRule) and hasattr(
+                        value, "apply_function"
+                    ):
+                        # FIXME: this works if there is only one eval rule!
+                        if saved_methods.get(method) is None:
+                            saved_methods[method] = value.apply_function
+                        value.apply_function = (
+                            lambda *args, **kwargs: traced_eval_method(
+                                method, *args, **kwargs
+                            )
+                        )
+
     return
