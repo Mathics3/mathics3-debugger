@@ -1,24 +1,26 @@
 `Mathics3 <https://mathics.org>`_ Debugger Module
+==================================================
 
 Until we have some proper documentation here are some examples.
 
 
-# Example session
+Mathics3 Module Examples
+------------------------
 
-In order to enable debugging in Mathics3, install ``mathics3-debugger``.
+To enable debugging in Mathics3, install ``mathics3-debugger``.
 Inside a mathics3 session run::
 
   In[1]:= LoadModule["pymathics.debugger"]
   Out[1]= "pymathics.debugger"
 
-Next you need to active some events to trigger going into the debugger::
+Next, you need to active some events to trigger going into the debugger::
 
   In[2]:= DebugActivate[mpmath->True]
   Out[2]=
 
 Other events include: "Debugger", "Get", "Numpy", "SymPy", "apply", and "evalMethd".
 
-In the above, ``mpmath->True goes into the debugger anytime an mpmath function is called.
+In the above, ``mpmath->True`` goes into the debugger anytime a mpmath function is called.
 ``Exp[1.0]`` is such a function::
 
   In[3]:= Exp[1.0]
@@ -50,9 +52,12 @@ When you are done inspecting things, run ``continue`` (or short-hand ``c``) to r
     Out[3]= 2.71828
 
 
-## Post-mortem debugging::
+Post-mortem debugging
+---------------------
 
 
+To enter the debugger on an unrecoverable error, use the
+``--post-mortem`` option when invoking ``mathics``::
 
   mathics --post-mortem
   # Find a Python bug in Mathics3 and trigger that.
@@ -69,7 +74,6 @@ When you are done inspecting things, run ``continue`` (or short-hand ``c``) to r
     (/tmp/mathics/builtin/compress.py:37 @6): eval
     !! 37         1/0
     R=> (<class 'ZeroDivisionError'>, ZeroDivisionError('division by zero'),
-
     (Trepan3k:pm) load trepan3k_mathics3
     loaded command: "mathics3"
     loaded command: "mbacktrace"
