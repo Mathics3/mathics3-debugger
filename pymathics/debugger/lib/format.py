@@ -1,13 +1,21 @@
 from mathics.builtin.patterns.basic import Blank, BlankNullSequence, BlankSequence
 from mathics.builtin.patterns.composite import Pattern, OptionsPattern
+from mathics.builtin.patterns.rules import RuleDelayed
 from mathics.core.atoms import Atom
 from mathics.core.element import BaseElement
 from mathics.core.expression import Expression
 from mathics.core.list import ListExpression
 from mathics.core.pattern import AtomPattern, ExpressionPattern
 from mathics.core.rules import FunctionApplyRule, Rule
-from mathics.core.symbols import Symbol
-from mathics.core.systemsymbols import SymbolRule
+from mathics.core.symbols import Symbol, SymbolList
+from mathics.core.systemsymbols import (
+    SymbolBlank,
+    SymbolBlankNullSequence,
+    SymbolBlankSequence,
+    SymbolPattern,
+    SymbolRule,
+    SymbolRuleDelayed,
+)
 from mathics_pygments.lexer import MathematicaLexer
 from pygments import highlight
 from pygments.formatters import Terminal256Formatter
@@ -16,6 +24,25 @@ from pygments.formatters import Terminal256Formatter
 
 
 mma_lexer = MathematicaLexer()
+
+
+def format_list(elements: tuple) -> str:
+    """
+    Return Mathics3 string using the elements of a List[]
+    M-expression or ListExpression object
+    """
+    return "{%s}" % (", ".join([format_element(element) for element in elements]),)
+
+
+def format_pattern(elements: tuple) -> str:
+    """
+    Return Mathics3 string using the elemnents of a Pattern[] M-expression
+    or Pattern object
+    """
+    assert len(elements) == 2
+    first_arg = elements[0]
+    second_arg = elements[1]
+    return f"{format_element(first_arg)}{format_element(second_arg)}"
 
 
 def format_element(element: BaseElement) -> str:
@@ -55,14 +82,38 @@ def format_element(element: BaseElement) -> str:
     # Note ListExpression test has to come before Expression test since
     # ListExpression is a subclass of Expression
     elif isinstance(element, ListExpression):
-        return "{%s}" % (
-            ", ".join([format_element(element) for element in element.elements]),
-        )
+        return format_list(element.elements)
     elif isinstance(element, (Expression, ExpressionPattern)):
-        if element.head is SymbolRule:
+        head = element.head
+        # We handle printing "Expression"s which haven't been converted to an internal data structure yet
+        # for example Expression[List, Integer1, Integer2] instead of ListExpression[Integer1, Integer2]
+        if head is SymbolList:
+            return format_list(element.elements)
+        elif head is SymbolPattern and len(element.elements) == 2:
+            return format_pattern(element.elements)
+        elif head is SymbolRule:
             return f"{format_element(element.elements[0])} -> {format_element(element.elements[1])}"
+        elif head is SymbolRuleDelayed:
+            return f"{format_element(element.elements[0])} :> {format_element(element.elements[1])}"
+        elif head in (SymbolBlank, SymbolBlankNullSequence, SymbolBlankSequence):
+            if head is SymbolBlank:
+                name = "_"
+            elif head is SymbolBlankSequence:
+                name = "__"
+            else:
+                name = "___"
+
+            if len(element.elements) == 0:
+                return name
+            else:
+                return (
+                    f"{name}"
+                    f"{', '.join([format_element(element) for element in element.elements])}"
+                )
+
         else:
-            return f"{format_element(element.head)}[%s]" % (
+            # A general Expression.
+            return f"{format_element(head)}[%s]" % (
                 ", ".join([format_element(element) for element in element.elements]),
             )
     elif isinstance(element, OptionsPattern):
@@ -71,11 +122,11 @@ def format_element(element: BaseElement) -> str:
         )
     # FIXME handle other than 2 arguments...
     elif isinstance(element, Pattern) and len(element.elements) == 2:
-        first_arg = element.elements[0]
-        second_arg = element.elements[1]
-        return f"{format_element(first_arg)}{format_element(second_arg)}"
+        return format_pattern(element.elements)
     elif isinstance(element, Rule):
         return f"{format_element(element.pattern)} -> {format_element(element.replace)}"
+    elif isinstance(element, RuleDelayed):
+        return f"{format_element(element.pattern)} :> {format_element(element.replace)}"
     return str(element)
 
 
