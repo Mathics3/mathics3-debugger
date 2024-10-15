@@ -16,6 +16,7 @@
 
 # Our local modules
 from trepan.processor.command.base_subcmd import DebuggerSubcommand
+from pymathics.debugger.lib.format import pygments_format
 from pymathics.debugger.lib.stack import print_stack_trace
 
 
@@ -38,19 +39,45 @@ class InfoProgram(DebuggerSubcommand):
     def run(self, args):
         """Execution status of the program."""
         proc = self.proc
-        if proc.event:
-            msg = f"Mathics3 stop via a '{proc.event}' event."
+        event = proc.event
+        if event:
+            msg = f"Mathics3 stop via a '{event}' event."
             self.msg(msg)
+
+        style=self.settings["style"]
+        if event == "evalMethod":
+            callback_arg = self.core.arg
+            formatted_function = pygments_format(f"{callback_arg[0]}[]", style=style)
+
+            self.msg(f"Built-in Function: {formatted_function}")
+            # TODO get function from the target of the FunctionApplyRule if that
+            # is what we have
+
+            # self.msg(f"method_function: {callback_arg[1]}")
+            # self.msg(f"args: {callback_arg[2]}")
+            # self.msg(f"kwargs: {callback_arg[3]}")
+        elif event == "mpmath":
+            callback_arg = self.core.arg
+            formatted_function = pygments_format(f"{callback_arg[0]}()", style=style)
+            self.msg(f"mpmath function: {formatted_function}")
+            # self.msg(f"mpmath method: {callback_arg[1]}")
+        elif event == "SymPy":
+            callback_arg = self.core.arg
+            formatted_function = pygments_format(f"{callback_arg[0]}()", style=style)
+            self.msg(f"SymPy function: {formatted_function}")
+            # self.msg(f"mpmath method: {callback_arg[1]}")
+
+
         print_stack_trace(
             self.proc,
             1,
-            style=self.settings["style"],
+            style=style,
             opts={"expression": True, "builtin": False},
         )
         print_stack_trace(
             self.proc,
             1,
-            style=self.settings["style"],
+            style=style,
             opts={"expression": True, "builtin": True},
         )
         return

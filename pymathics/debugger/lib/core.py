@@ -86,6 +86,9 @@ class DebuggerCore:
         # We can however modify it, such as for breakpoints
         self.event = None
 
+        # The "arg" value in the callback
+        self.event_arg = None
+
         # Is debugged program currently under execution?
         self.execution_status = "Pre-execution"
 
@@ -431,6 +434,11 @@ class DebuggerCore:
                 return self
 
             event_filter = event_filters.get(event)
+
+            # Update arg to let user see details of callback
+            # in "info program"
+            self.arg = arg
+
             if event_filter is not None:
                 if event == "mpmath" and event_filter:
                     bound_mpmath_method, call_args = arg
@@ -439,6 +447,7 @@ class DebuggerCore:
                     # mpmath_name on of the names listed.
                     if mpmath_name not in event_filter and event_filter:
                         return
+                    self.arg = (mpmath_name, bound_mpmath_method, call_args)
                     pass
                 elif event == "SymPy":
                     sympy_function, call_args = arg
@@ -447,6 +456,7 @@ class DebuggerCore:
                     # sympy_name on of the names listed.
                     if sympy_name not in event_filter and event_filter:
                         return
+                    self.arg = (sympy_name, sympy_function, call_args)
                 elif event == "Get":
                     file_path, call_args = arg
                     if file_path not in event_filter and event_filter:

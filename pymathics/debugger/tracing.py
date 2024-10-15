@@ -236,8 +236,8 @@ def traced_eval_method(method_name: str, *args, **kwargs):
             current_frame = current_frame.f_back
 
     dbg.core.execution_status = "Running"
-    dbg.core.trace_dispatch(current_frame, "evalMethod", (*args, *kwargs))
     method = saved_methods.get(method_name)
+    dbg.core.trace_dispatch(current_frame, "evalMethod", (method_name, method, *args, *kwargs))
     if method is not None:
         return method(*args, **kwargs)
 
