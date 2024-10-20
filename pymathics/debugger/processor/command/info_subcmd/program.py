@@ -53,9 +53,9 @@ class InfoProgram(DebuggerSubcommand):
             # TODO get function from the target of the FunctionApplyRule if that
             # is what we have
 
-            # self.msg(f"method_function: {callback_arg[1]}")
-            # self.msg(f"args: {callback_arg[2]}")
-            # self.msg(f"kwargs: {callback_arg[3]}")
+            self.msg(f"method_function: {callback_arg[1]}")
+            self.msg(f"args: {callback_arg[2]}")
+            self.msg(f"kwargs: {callback_arg[3]}")
         elif event == "mpmath":
             callback_arg = self.core.arg
             formatted_function = pygments_format(f"{callback_arg[0]}()", style=style)

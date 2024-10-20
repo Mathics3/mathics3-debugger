@@ -45,7 +45,7 @@ def format_pattern(elements: tuple) -> str:
     return f"{format_element(first_arg)}{format_element(second_arg)}"
 
 
-def format_element(element: BaseElement) -> str:
+def format_element(element: BaseElement, allow_python=False) -> str:
     """Formats a Mathics3 element more like the way it might be
     entered in Mathics3, hiding some of the internal Element representation.
 
@@ -53,6 +53,25 @@ def format_element(element: BaseElement) -> str:
     internal object representations like ListExpression.
 
     """
+    if allow_python:
+        if isinstance(element, (list, tuple)):
+            aggregate_function = "list" if isinstance(element, list) else "tuple"
+            return (
+                f"{aggregate_function}("
+                f"{', '.join([format_element(e) for e in element])})"
+            )
+        elif isinstance(element, dict):
+            return (
+                "{\n  " +
+                (",\n  ".join(
+                    [
+                        f"{format_element(key)}: {format_element(value)}"
+                        for key, value in element.items()
+                    ]
+                ))
+                + "\n}"
+            )
+
     if isinstance(element, Symbol):
         return element.short_name
     elif isinstance(element, Atom):
