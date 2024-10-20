@@ -21,7 +21,9 @@ from pyficache import getline, highlight_string
 # Our local modules
 from pymathics.debugger.lib.format import pygments_format
 from trepan.processor.command import base_subcmd as Mbase_subcmd
+from trepan.processor.print import format_frame
 from trepan.lib.complete import complete_token
+from trepan.lib.format import LineNumber, format_token
 from trepan.lib.stack import format_function_name
 from trepan.processor import frame as Mframe
 from pymathics.debugger.lib.stack import (
@@ -148,7 +150,8 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
             line_text = getline(file_path, line_number, {"style": style}).strip()
             short_line_text = proc._saferepr(line_text)[1:-1]
             formatted_text = highlight_string(proc._saferepr(short_line_text))
-            self.msg(f"  current line number: {frame.f_lineno}: {formatted_text}")
+            formatted_lineno = format_token(LineNumber, str(frame.f_lineno), style=style)
+            self.msg(f"  current line number: {formatted_lineno}: {formatted_text}")
 
 
         if hasattr(frame, "f_restricted"):
@@ -159,7 +162,7 @@ class InfoFrame(Mbase_subcmd.DebuggerSubcommand):
             self.msg(f"  last instruction: {frame.f_lasti}")
             self.msg(f"  code: {frame.f_code}")
 
-        self.msg(f"  previous frame: {frame.f_back}")
+        self.msg(f"  previous frame: {format_frame(frame.f_back, style)}")
 
         if is_verbose:
             self.msg(f"  tracing function: {frame.f_trace}")
