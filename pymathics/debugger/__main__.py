@@ -172,7 +172,7 @@ class DebugActivate(Builtin):
             #     FunctionApplyRule.apply_function = (
             #         apply_builtin_box_fn_traced if event_is_debugged else EVALUATION_APPLY
             #     )
-        print("XXX", event_filters)
+        # print("XXX", event_filters)
 
 
 class Debugger(Builtin):

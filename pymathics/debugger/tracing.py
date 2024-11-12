@@ -250,6 +250,7 @@ def pre_evaluation_debugger_hook(query, evaluation: Evaluation):
     print("Pre evaluation hook called")
     for method in event_filters["evalMethod"]:
         if method == "message":
+            from trepan.api import debug; debug()
             if saved_methods.get(method) is None:
                 saved_methods[method] = evaluation.message
             evaluation.message = traced_eval_method

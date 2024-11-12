@@ -35,7 +35,7 @@ import trepan.lib.file as Mfile
 import trepan.lib.stack as Mstack
 import trepan.lib.thred as Mthread
 import trepan.misc as Mmisc
-import trepan.processor.complete as Mcomplete
+from trepan.processor.complete_rl import completer
 from pygments.console import colorize
 from tracer import EVENT2SHORT
 from trepan.processor import cmdfns
@@ -417,7 +417,7 @@ class CommandProcessor(Processor):
         # command name before alias or macro resolution
         self.cmd_name = ""
         self.cmd_queue = []  # Queued debugger commands
-        self.completer = lambda text, state: Mcomplete.completer(self, text, state)
+        self.completer = lambda text, state: completer(self, text, state)
         self.current_command = ""  # Current command getting run
         self.debug_nest = 1
         self.display_mgr = Mdisplay.DisplayMgr()
