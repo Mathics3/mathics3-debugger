@@ -117,7 +117,6 @@ class DebugActivate(Builtin):
                 evaluation.message("DebugActivate", "opttype", option)
                 return None, False
 
-
         for event_name in TraceEventNames:
             if event_name == "Debugger":
                 continue
@@ -228,18 +227,60 @@ class TraceActivate(Builtin):
 
     def eval(self, evaluation: Evaluation, options: dict):
         "TraceActivate[OptionsPattern[TraceActivate]]"
+
+        # DRY with TraceActivate
+        def validate_option(option, evaluation: Evaluation) -> Tuple[Optional[list], bool]:
+            """
+            Checks that `option` is valid; it should either be a String, a Mathics3 boolean, or a List of
+            Mathics3 String.
+
+            The return is a tuple of the filter expression and a boolean indicating wither `option` was
+            valid. Recall that a filter of None means don't filter at all - except anything.
+            """
+            if isinstance(option, ListExpression):
+                filters = []
+                for elt in option.elements:
+                    # TODO: accept a Symbol look up for {mpmath, SymPy, Numpy} name-ness
+                    if not isinstance(elt, String):
+                        evaluation.message("DebugActivate", "opttname", option)
+                        return None, False
+                    # TODO: check that string is a valid {mpmath, SymPy, Numpy} name.
+                    filters.append(elt.value)
+                return filters, True
+            elif option in (SymbolTrue, SymbolFalse):
+                return (None, True)
+            elif isinstance(option, String):
+                # TODO: check that string is a valid {mpmath, SymPy, NumPy} name
+                return ([option.value], True)
+            else:
+                print("FOO")
+                evaluation.message("DebugActivate", "opttype", option)
+                return None, False
+
         # adjust_event_handlers(self, evaluation, options)
         for event_name in TraceEventNames:
+
+            if event_name == "Debugger":
+                continue
             option = self.get_option(options, event_name, evaluation)
+            if option is None:
+                evaluation.message("TraceActivate", "options", event_name)
+                break
+
+            filters, is_valid = validate_option(option, evaluation)
+            if not is_valid:
+                break
+
             event_is_traced = option == SymbolTrue
             if event_is_traced:
                 tracing.hook_entry_fn = tracing.call_event_print
                 tracing.hook_exit_fn = tracing.return_event_print
             if event_name == "Get":
-                io_files.DEAULT_TRACE_FN = (
+                io_files.GET_PRINT_FN = (
                     io_files.print_line_number_and_text if event_is_traced else None
                 )
             elif event_name == "SymPy":
+                event_filters["SymPy"] = filters
                 tracing.run_sympy = (
                     tracing.run_sympy_traced if event_is_traced else tracing.run_fast
                 )
@@ -248,10 +289,12 @@ class TraceActivate(Builtin):
                     apply_builtin_fn_print if event_is_traced else EVALUATION_APPLY
                 )
             elif event_name == "evalMethod":
+                event_filters["evalMethod"] = filters
                 mathics_core.PRE_EVALUATION_HOOK = (
                     apply_builtin_fn_print if event_is_traced else None
                 )
             elif event_name == "applyBox":
+                event_filters["mpmath"] = filters
                 FunctionApplyRule.apply_function = (
                     apply_builtin_fn_print if event_is_traced else EVALUATION_APPLY
                 )

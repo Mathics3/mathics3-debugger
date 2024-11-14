@@ -2,6 +2,7 @@
 /.hypothesis
 /.python-version
 /ChangeLog
+/Mathics3_debugger.egg-info
 /Mathics3_graph.egg-info
 /build
 /dist
