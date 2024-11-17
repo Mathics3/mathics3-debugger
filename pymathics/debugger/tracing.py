@@ -225,7 +225,7 @@ def call_trepan3k(proc_obj):
     return
 
 
-def debug_evaluate(self, evaluation, status: str, orig_expr = None):
+def debug_evaluate(self, evaluation, status: str, orig_expr=None):
     """
     Called from a decorated Python @trace_evaluate .evaluate()
     method when DebugActivate["evaluate" -> True]
@@ -244,7 +244,9 @@ def debug_evaluate(self, evaluation, status: str, orig_expr = None):
 
     dbg.core.execution_status = "Running"
     event_str = "evaluate-entry" if status == "Evaluating" else "evaluate-result"
-    dbg.core.trace_dispatch(current_frame, event_str, (self, evaluation, status, orig_expr))
+    dbg.core.trace_dispatch(
+        current_frame, event_str, (self, evaluation, status, orig_expr)
+    )
 
 
 def debug_eval_method(method_name: str, *args, **kwargs):
@@ -262,7 +264,9 @@ def debug_eval_method(method_name: str, *args, **kwargs):
 
     dbg.core.execution_status = "Running"
     method = saved_methods.get(method_name)
-    dbg.core.trace_dispatch(current_frame, "evalMethod", (method_name, method, *args, *kwargs))
+    dbg.core.trace_dispatch(
+        current_frame, "evalMethod", (method_name, method, *args, *kwargs)
+    )
     if method is not None:
         return method(*args, **kwargs)
 
@@ -298,7 +302,8 @@ def pre_evaluation_debugger_hook(query, evaluation: Evaluation):
 
     return
 
-def trace_evaluate(expr, evaluation, status: str, orig_expr = None):
+
+def trace_evaluate(expr, evaluation, status: str, orig_expr=None):
     """
     Print what's up with an evaluation. In contrast to debug_evaluate,
     we don't stop execution and go into a debugger.
@@ -309,7 +314,20 @@ def trace_evaluate(expr, evaluation, status: str, orig_expr = None):
     if evaluation.definitions.timing_trace_evaluation:
         evaluation.print_out(time.time() - evaluation.start_time)
 
+    # Test and dispose of various situations where showing information
+    # is pretty useless: evaluationg a Symbol is the Symbol.
+    # Showing the return value of a ListExpression literal is
+    # also useless.
     if isinstance(expr, Symbol):
+        return
+
+    if (
+        status == "Returning"
+        and hasattr(expr, "is_literal")
+        and expr.is_literal
+        and hasattr(orig_expr, "is_literal")
+        and orig_expr.is_literal
+    ):
         return
 
     global dbg
@@ -322,12 +340,15 @@ def trace_evaluate(expr, evaluation, status: str, orig_expr = None):
     formatted_expr = format_element(expr)
     msg = dbg.core.processor.msg
     indents = "  " * evaluation.recursion_depth
-    if orig_expr is not None and orig_expr != expr:
+
+    if orig_expr == expr:
+        # If the two expressions are the same, there is no point in repeating the
+        # output.
+        return
+    if orig_expr is not None:
         formatted_orig_expr = format_element(orig_expr)
         msg(
-             f"{indents}{status}: {pygments_format(formatted_orig_expr + ' = ' + formatted_expr, style)}"
+            f"{indents}{status}: {pygments_format(formatted_orig_expr + ' = ' + formatted_expr, style)}"
         )
     else:
-        msg(
-             f"{indents}{status}: {pygments_format(formatted_expr, style)}"
-        )
+        msg(f"{indents}{status}: {pygments_format(formatted_expr, style)}")
