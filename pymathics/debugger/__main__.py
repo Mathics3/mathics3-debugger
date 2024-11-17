@@ -159,7 +159,7 @@ class DebugActivate(Builtin):
                     apply_builtin_fn_traced if event_is_debugged else EVALUATION_APPLY
                 )
             elif event_name == "evaluate":
-                event_filters["evaluate"] = filters
+                event_filters["evaluate-entry"] = event_filters["evaluate-result"] = filters
                 tracing.trace_evaluate_on_return = tracing.trace_evaluate_on_call = (
                     debug_evaluate if event_is_debugged else None
                 )

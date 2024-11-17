@@ -42,7 +42,8 @@ event_filters: Dict[str, List[str]] = {
     "SymPy": [],
     "apply": [],
     "applyBox": [],
-    "evaluate": [],
+    "evaluate-entry": [],  # Before evaluate()
+    "evaluate-result": [],  # After evaluate() when we have a value
     "evalMethod": [],
     "evalFunction": [],
     "mpmath": [],

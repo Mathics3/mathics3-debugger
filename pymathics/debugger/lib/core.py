@@ -461,6 +461,17 @@ class DebuggerCore:
                     file_path, call_args = arg
                     if file_path not in event_filter and event_filter:
                         return
+                elif event == "evaluate-result":
+                    orig_expr = arg[-1]
+                    if orig_expr.get_name(short=True) not in event_filter:
+                        return
+                elif event == "evaluate-entry":
+                    expr = arg[0]
+                    if expr.get_name(short=True) not in event_filter:
+                        return
+                else:
+                    print(f"FIXME: Unhandlied event {event}")
+
 
 
             return self.processor.event_processor(frame, event, arg)
