@@ -109,6 +109,10 @@ class DebugActivate(Builtin):
                         evaluation.message("DebugActivate", "opttname", option)
                         return None, False
                     # TODO: check that string is a valid {mpmath, SymPy, Numpy} name.
+                    # THINK ABOUT: if a filter value is a short name, e.g. "Plus" instead of
+                    # "System`Plus", should we try to fill in the full name? Or use "Plus"
+                    # as a way to match any "XXX`YYY..`Plus" that might appear in any
+                    # context in the future.
                     filters.append(elt.value)
                 return filters, True
             elif option in (SymbolTrue, SymbolFalse):
