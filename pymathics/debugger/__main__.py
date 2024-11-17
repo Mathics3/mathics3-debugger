@@ -20,14 +20,16 @@ from mathics.core.symbols import SymbolFalse, SymbolTrue
 
 from pymathics.debugger.tracing import (
     TraceEventNames,
-    apply_builtin_box_fn_traced,
+    # apply_builtin_box_fn_traced,
     apply_builtin_fn_print,
     apply_builtin_fn_traced,
     call_event_debug,
     call_event_get,
     call_trepan3k,
+    debug_evaluate,
     event_filters,
     pre_evaluation_debugger_hook,
+    trace_evaluate,
 )
 
 from typing import Dict, Optional, Tuple
@@ -39,6 +41,7 @@ EVENT_OPTIONS: Dict[str, str] = {
     "SymPy": "False",
     "apply": "False",
     "applyBox": "False",
+    "evaluate": "False",
     "evalMethod": "False",
     "evalFunction": "False",
     "mpmath": "False",
@@ -154,6 +157,11 @@ class DebugActivate(Builtin):
             elif event_name == "apply":
                 FunctionApplyRule.apply_function = (
                     apply_builtin_fn_traced if event_is_debugged else EVALUATION_APPLY
+                )
+            elif event_name == "evaluate":
+                event_filters["evaluate"] = filters
+                tracing.trace_evaluate_on_return = tracing.trace_evaluate_on_call = (
+                    debug_evaluate if event_is_debugged else None
                 )
 
             elif event_name == "evalMethod":
@@ -287,6 +295,11 @@ class TraceActivate(Builtin):
             elif event_name == "apply":
                 FunctionApplyRule.apply_function = (
                     apply_builtin_fn_print if event_is_traced else EVALUATION_APPLY
+                )
+            elif event_name == "evaluate":
+                event_filters["evaluate"] = filters
+                tracing.trace_evaluate_on_return = tracing.trace_evaluate_on_call = (
+                   trace_evaluate if event_is_traced else None
                 )
             elif event_name == "evalMethod":
                 event_filters["evalMethod"] = filters

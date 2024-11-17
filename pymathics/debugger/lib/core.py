@@ -417,7 +417,6 @@ class DebuggerCore:
                 return None
 
             self.event = event
-            print("XXX")
             if self.debugger.settings["trace"]:
                 print_event_set = self.debugger.settings["printset"]
                 if self.event in print_event_set:

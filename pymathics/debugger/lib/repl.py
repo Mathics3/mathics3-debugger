@@ -65,7 +65,9 @@ class DebugREPL:
             "Get",  # Get[]
             "SymPy",  # SymPy call
             "apply",  # Builtin function call
-            "evalMethod", # calling a builti-in evaluation method Class.eval_xxx()
+            "evaluate-entry", # before evaluate()
+            "evaluate-result", # after evaluate()
+            "evalMethod", # calling a built-in evaluation method Class.eval_xxx()
             "debugger",  # explicit call via "Debugger"
             "mpmath",  # mpmath call
             }

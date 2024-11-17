@@ -1,12 +1,13 @@
 import inspect
 import re
+import time
 from enum import Enum
 from typing import Callable
 
 import mathics.eval.tracing as eval_tracing
 from mathics.core.evaluation import Evaluation
 from mathics.core.rules import FunctionApplyRule
-from mathics.core.symbols import strip_context
+from mathics.core.symbols import Symbol, strip_context
 from trepan.debugger import Trepan
 
 from pymathics.debugger.lib.format import format_element, pygments_format
@@ -21,7 +22,8 @@ TraceEventNames = (
     "SymPy",  # traps calls to SymPy functions
     "apply",  # applying a function that is *not* a Boxing function
     "applyBox",  # applying a function that *is* a Boxing function
-    "evalMethod",  # calling a builti-in evaluation method Class.eval_xxx()
+    "evaluate",  # calling an evaluate() method, e.g. Expression.evaluate()
+    "evalMethod",  # calling a built-in evaluation method Class.eval_xxx()
     "evalFunction",  # calling an evaluation  eval_Xxx() of mathics.eval
     "mpmath",  # traps calls to mpmath functions
     "parse",  # traps calls to parse()
@@ -40,6 +42,7 @@ event_filters: Dict[str, List[str]] = {
     "SymPy": [],
     "apply": [],
     "applyBox": [],
+    "evaluate": [],
     "evalMethod": [],
     "evalFunction": [],
     "mpmath": [],
@@ -222,7 +225,29 @@ def call_trepan3k(proc_obj):
     return
 
 
-def traced_eval_method(method_name: str, *args, **kwargs):
+def debug_evaluate(self, evaluation, status: str, orig_expr = None):
+    """
+    Called from a decorated Python @trace_evaluate .evaluate()
+    method when DebugActivate["evaluate" -> True]
+    """
+    global dbg
+    if dbg is None:
+        from pymathics.debugger.lib.repl import DebugREPL
+
+        dbg = DebugREPL()
+
+    current_frame = inspect.currentframe()
+    if current_frame is not None:
+        current_frame = current_frame.f_back
+        if current_frame is not None:
+            current_frame = current_frame.f_back
+
+    dbg.core.execution_status = "Running"
+    event_str = "evaluate-entry" if status == "Evaluating" else "evaluate-result"
+    dbg.core.trace_dispatch(current_frame, event_str, (self, evaluation, status, orig_expr))
+
+
+def debug_eval_method(method_name: str, *args, **kwargs):
     global dbg
     if dbg is None:
         from pymathics.debugger.lib.repl import DebugREPL
@@ -250,10 +275,9 @@ def pre_evaluation_debugger_hook(query, evaluation: Evaluation):
     print("Pre evaluation hook called")
     for method in event_filters["evalMethod"]:
         if method == "message":
-            from trepan.api import debug; debug()
             if saved_methods.get(method) is None:
                 saved_methods[method] = evaluation.message
-            evaluation.message = traced_eval_method
+            evaluation.message = debug_eval_method
         else:
             definition = evaluation.definitions.get_definition(
                 method, only_if_exists=True
@@ -267,9 +291,43 @@ def pre_evaluation_debugger_hook(query, evaluation: Evaluation):
                         if saved_methods.get(method) is None:
                             saved_methods[method] = value.apply_function
                         value.apply_function = (
-                            lambda *args, **kwargs: traced_eval_method(
+                            lambda *args, **kwargs: debug_eval_method(
                                 method, *args, **kwargs
                             )
                         )
 
     return
+
+def trace_evaluate(expr, evaluation, status: str, orig_expr = None):
+    """
+    Print what's up with an evaluation. In contrast to debug_evaluate,
+    we don't stop execution and go into a debugger.
+
+    Called from a decorated Python @trace_evaluate .evaluate()
+    method when TraceActivate["evaluate" -> True]
+    """
+    if evaluation.definitions.timing_trace_evaluation:
+        evaluation.print_out(time.time() - evaluation.start_time)
+
+    if isinstance(expr, Symbol):
+        return
+
+    global dbg
+    if dbg is None:
+        from pymathics.debugger.lib.repl import DebugREPL
+
+        dbg = DebugREPL()
+
+    style = dbg.settings["style"]
+    formatted_expr = format_element(expr)
+    msg = dbg.core.processor.msg
+    indents = "  " * evaluation.recursion_depth
+    if orig_expr is not None and orig_expr != expr:
+        formatted_orig_expr = format_element(orig_expr)
+        msg(
+             f"{indents}{status}: {pygments_format(formatted_orig_expr + ' = ' + formatted_expr, style)}"
+        )
+    else:
+        msg(
+             f"{indents}{status}: {pygments_format(formatted_expr, style)}"
+        )
