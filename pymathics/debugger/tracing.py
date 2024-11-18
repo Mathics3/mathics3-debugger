@@ -7,7 +7,7 @@ from typing import Callable
 import mathics.eval.tracing as eval_tracing
 from mathics.core.evaluation import Evaluation
 from mathics.core.rules import FunctionApplyRule
-from mathics.core.symbols import Symbol, strip_context
+from mathics.core.symbols import Symbol, SymbolConstant, strip_context
 from trepan.debugger import Trepan
 
 from pymathics.debugger.lib.format import format_element, pygments_format
@@ -319,7 +319,7 @@ def trace_evaluate(expr, evaluation, status: str, orig_expr=None):
     # is pretty useless: evaluationg a Symbol is the Symbol.
     # Showing the return value of a ListExpression literal is
     # also useless.
-    if isinstance(expr, Symbol):
+    if isinstance(expr, Symbol) and not isinstance(expr, SymbolConstant):
         return
 
     if (
