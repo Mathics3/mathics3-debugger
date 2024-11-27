@@ -417,7 +417,6 @@ class DebuggerCore:
                 return None
 
             self.event = event
-            print("XXX")
             if self.debugger.settings["trace"]:
                 print_event_set = self.debugger.settings["printset"]
                 if self.event in print_event_set:
@@ -462,7 +461,22 @@ class DebuggerCore:
                     file_path, call_args = arg
                     if file_path not in event_filter and event_filter:
                         return
-
+                elif event == "evaluate-result":
+                    orig_expr = arg[-1]
+                    # If any of the evaluation-result filters uses a short name, then we will take the
+                    # short name of the original expression.
+                    # TODO: Think about if we should allow short names in event filters or whether we should
+                    # always fill those in based on $Context or $ContextPath.
+                    use_short = all(name.find("`") == -1 for name in event_filter)
+                    if orig_expr.get_name(short=use_short) not in event_filter:
+                        return
+                elif event == "evaluate-entry":
+                    expr = arg[0]
+                    if expr.get_name() not in event_filter:
+                        return
+                else:
+                    print(f"FIXME: Unhandled event {event}")
+                    return
 
             return self.processor.event_processor(frame, event, arg)
         # except ReturnChanged:

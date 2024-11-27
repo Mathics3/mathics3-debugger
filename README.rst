@@ -52,6 +52,65 @@ When you are done inspecting things, run ``continue`` (or short-hand ``c``) to r
     Out[3]= 2.71828
 
 
+Improved TraceEvaluation
+------------------------
+
+As before, install ``mathics3-debugger``. To set up tracing ``.evaluate()`` calls::
+
+    In[1]:= LoadModule["pymathics.debugger"]
+    Out[1]= "pymathics.debugger"
+
+    In[2]:= TraceActivate[evaluate->True]
+    Out[2]=
+
+In contrast to ``DebugActivate``, ``TraceActivate`` just prints or traces events.
+
+Now we are ready for some action::
+
+    In[3]:= (x + 1) ^ 2
+    Evaluating: Power[Plus[x, 1], 2]
+
+      Evaluating: Plus[x, 1]
+
+      Returning: Plus[x, 1] = Plus[1, x]
+
+      Evaluating: Plus[1, x]
+
+    Returning: Power[Plus[x, 1], 2] = Power[Plus[1, x], 2]
+
+    Out[3]= (1 + x) ^ 2
+
+Above we trace before an ``evaluate()`` method call and also sometimes show the return value.
+
+To reduce the unecessary output, evaluations when it has some value. In particular, above there is an evaluation of the Symbols "Power", and "Plus", The result of evaluating these is basically the same symbol. So we don't show either ``Evaluating: Power`` and ``Returning: Power``. Simlarly we omit the same for ``Plus``.
+
+We also omit ``Returning: Plus[1, x]`` because ``Plus[1, x]`` is the same expression as went in.
+But notice we *do* show ``Returning: Plus[x, 1] = Plus[1, x]``. Here the difference is that the order of the parameters got rearranged. Perhaps this is not interesting either, but currently it is shown.
+
+Now let's do the same thing but set the value of ``x``::
+
+   In[4]:= x = 3
+   Evaluating: Set[x, 3]
+
+   Returning: Set[x, 3] = 3
+
+   Out[4]= 3
+
+   In[5]:= (x + 1) ^ 2
+   Evaluating: Power[Plus[x, 1], 2]
+
+     Evaluating: Plus[x, 1]
+
+       Returning: x = 3
+
+     Returning: Plus[x, 1] = 4
+
+   Returning: Power[Plus[x, 1], 2] = 16
+
+   Out[5]= 16
+
+Here, the return values have the computed Integer values from evaluation as you'd expect to see when working with Integer values instead of mixed symbolic and Integer values.
+
 Post-mortem debugging
 ---------------------
 

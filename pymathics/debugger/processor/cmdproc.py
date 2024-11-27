@@ -400,6 +400,8 @@ class CommandProcessor(Processor):
         self.event2short["signal"] = "?!"
         self.event2short["apply"] = "@@"
         self.event2short["evalMethod"] = "@m"
+        self.event2short["evaluate-entry"] = "@e"
+        self.event2short["evaluate-result"] = "e@"
         self.event2short["evalFunction"] = "@f"
         self.event2short["brkpt"] = "xx"
         self.event2short["debugger"] = "$ "

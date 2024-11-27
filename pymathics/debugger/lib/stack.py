@@ -30,7 +30,7 @@ from trepan.lib.stack import (
     format_function_name,
     format_return_and_location,
     get_call_function_name,
-    is_exec_stmt,
+    is_eval_exec_stmt,
 )
 from mathics.core.builtin import Builtin
 from mathics.core.element import BaseElement
@@ -89,15 +89,14 @@ def format_function_and_parameters(frame, debugger, style: str) -> Tuple[bool, s
         varkw,
     ):
         is_module = True
-        if is_exec_stmt(frame):
-            fn_name = format_token(Function, "exec", style=style)
-            s += f" {format_token(Function, fn_name, style=style)}(...)"
+        if (func_name := is_eval_exec_stmt(frame)):
+            s += f" {format_token(Function, func_name, style=style)}(...)"
         else:
             # FIXME: package the below as a function in trepan3k
-            fn_name = get_call_function_name(frame)
-            if fn_name:
-                if fn_name:
-                    s += f" {format_token(Function, fn_name, style=style)}({...})"
+            func_name = get_call_function_name(frame)
+            if func_name:
+                if func_name:
+                    s += f" {format_token(Function, func_name, style=style)}({...})"
             pass
     else:
         is_module = False
