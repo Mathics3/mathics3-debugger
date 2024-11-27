@@ -30,7 +30,7 @@ from trepan.lib.stack import (
     format_function_name,
     format_return_and_location,
     get_call_function_name,
-    is_eval_exec_stmt,
+    is_eval_or_exec_stmt,
 )
 from mathics.core.builtin import Builtin
 from mathics.core.element import BaseElement
@@ -50,7 +50,7 @@ def count_frames(frame, count_start=0):
 
 def format_frame_self_arg(
     frame, args, debugger, style: str
-) -> Tuple[str, Optional[str]]:
+) -> Optional[str]:
     """If there is a "self" argument and it is is a Mathics3 kind of
     object, format that separately as its Mathics3 representation (as
     opposed to how it looks in Python).
@@ -89,7 +89,7 @@ def format_function_and_parameters(frame, debugger, style: str) -> Tuple[bool, s
         varkw,
     ):
         is_module = True
-        if (func_name := is_eval_exec_stmt(frame)):
+        if (func_name := is_eval_or_exec_stmt(frame)):
             s += f" {format_token(Function, func_name, style=style)}(...)"
         else:
             # FIXME: package the below as a function in trepan3k
