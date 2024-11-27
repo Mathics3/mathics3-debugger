@@ -67,25 +67,14 @@ In contrast to ``DebugActivate``, ``TraceActivate`` just prints or traces events
 
 Now we are ready for some action::
 
-    In[3]:= (x + 1) ^ 2
-    Evaluating: Power[Plus[x, 1], 2]
-
-      Evaluating: Plus[x, 1]
-
-      Returning: Plus[x, 1] = Plus[1, x]
-
-      Evaluating: Plus[1, x]
-
-    Returning: Power[Plus[x, 1], 2] = Power[Plus[1, x], 2]
-
-    Out[3]= (1 + x) ^ 2
+.. image:: https://github.com/Mathics3/mathics3-debugger/blob/master/screenshots/TraceEvaluation.png
 
 Above we trace before an ``evaluate()`` method call and also sometimes show the return value.
 
-To reduce the unecessary output, evaluations when it has some value. In particular, above there is an evaluation of the Symbols "Power", and "Plus", The result of evaluating these is basically the same symbol. So we don't show either ``Evaluating: Power`` and ``Returning: Power``. Simlarly we omit the same for ``Plus``.
+To reduce the unnecessary output, evaluations when it has some value. In particular, above there is an evaluation of the Symbols "Power", and "Plus", The result of evaluating these is the same symbol. So we don't show either ``Evaluating: Power``or ``Returning: Power``. Similarly, we omit the same for ``Plus``.
 
 We also omit ``Returning: Plus[1, x]`` because ``Plus[1, x]`` is the same expression as went in.
-But notice we *do* show ``Returning: Plus[x, 1] = Plus[1, x]``. Here the difference is that the order of the parameters got rearranged. Perhaps this is not interesting either, but currently it is shown.
+But notice we *do* show ``Returning: Plus[x, 1] = Plus[1, x]``. Here the difference is that the order of the parameters got rearranged. Perhaps this is not interesting either, but currently, it is shown.
 
 Now let's do the same thing but set the value of ``x``::
 
