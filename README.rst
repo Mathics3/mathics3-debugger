@@ -65,7 +65,7 @@ As before, install ``mathics3-debugger``. To set up tracing ``.evaluate()`` call
 
 In contrast to ``DebugActivate``, ``TraceActivate`` just prints or traces events.
 
-Now we are ready for some action::
+Now we are ready for some action:
 
 .. image:: https://github.com/Mathics3/mathics3-debugger/blob/master/screenshots/TraceEvaluation.png
 
