@@ -41,5 +41,8 @@ dynamic = ["version"]
 [project.urls]
 Homepage = "https://mathics.org/"
 
+[tool.setuptools]
+py-modules = ["pymathics"]
+
 [tool.setuptools.dynamic]
 version = {attr = "pymathics.trepan.version.__version__"}

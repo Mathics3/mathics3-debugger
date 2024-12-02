@@ -4,9 +4,8 @@
 /ChangeLog
 /Mathics3_debugger.egg-info
 /Mathics3_graph.egg-info
+/Mathics3_trepan.egg-info
 /build
 /dist
-/mathics_debugger.egg-info
-/pymathics_graph.egg-info
 /tmp
 __pycache__
