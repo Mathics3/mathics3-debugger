@@ -25,12 +25,15 @@
 #
 import signal
 
+from pymathics.trepan.lib.stack import print_expression_stack
 from trepan.lib.sighandler import (
-    yes_or_no,
+    fatal_signals,
+    SigHandler as TrepanSignalHandler,
+    SignalManager as TrepanSignalManager,
+    canonic_signame,
     lookup_signame,
     lookup_signum,
-    canonic_signame,
-    SignalManager as TrepanSignalManager,
+    yes_or_no,
 )
 
 
@@ -51,12 +54,79 @@ class SignalManager(TrepanSignalManager):
     handler.
     """
 
+    def initialize_handler(self, signame: str):
+        if signame in fatal_signals:
+            return False
+        signum = lookup_signum(signame)
+        if signum is None:
+            return False
+
+        try:
+            old_handler = signal.getsignal(signum)
+        except ValueError:
+            # On some OS's (Redhat 8), SIGNUM's are listed (like
+            # SIGRTMAX) that getsignal can't handle.
+            old_handler = None
+            if signame in self.sigs:
+                self.sigs.pop(signame)
+                pass
+
+        if signame in self.ignore_list:
+            self.sigs[signame] = SigHandler(
+                self.dbgr,
+                signame,
+                signum,
+                old_handler,
+                None,
+                False,
+                print_stack=False,
+                pass_along=True,
+            )
+        else:
+            self.sigs[signame] = SigHandler(
+                self.dbgr,
+                signame,
+                signum,
+                old_handler,
+                self.dbgr.intf[-1].msg,
+                True,
+                print_stack=False,
+                pass_along=False,
+            )
+            pass
+        return True
+
     def handle_print_stack(self, signame, print_stack):
         """Set whether we stop or not when this signal is caught.
         If 'set_stop' is True your program will stop when this signal
         happens."""
         self.sigs[signame].print_stack = print_stack
         return print_stack
+
+    pass
+
+class SigHandler(TrepanSignalHandler):
+    def handle(self, signum, frame):
+        """This method is called when a signal is received."""
+        core = self.dbgr.core
+        if self.print_method:
+            self.print_method(f"\n(Mathics3 Trepan) Program received signal {self.signame}.")
+        if self.print_stack:
+            print_expression_stack(core.processor, 100, style=self.dbgr.settings.get("style"))
+        if self.b_stop:
+            old_trace_hook_suspend = core.trace_hook_suspend
+            core.trace_hook_suspend = True
+            core.stop_reason = f"intercepting signal {self.signame} ({signum})"
+            core.processor.event_processor(frame, "signal", signum)
+            core.trace_hook_suspend = old_trace_hook_suspend
+            pass
+        if self.pass_along:
+            # pass the signal to the program
+            if self.old_handler:
+                self.old_handler(signum, frame)
+                pass
+            pass
+        return
 
     pass
 
@@ -94,24 +164,24 @@ if __name__ == "__main__":
         print(f"canonic_signame({i}): {canonic_signame(i)}")
         pass
 
-    from trepan.debugger import Trepan
+    # from pymathics.trepan.debugger import Trepan
 
-    dbgr = Trepan()
-    h = SignalManager(dbgr)
-    h.info_signal(["TRAP"])
-    # Set to known value
-    h.action("SIGUSR1")
-    h.action("usr1 print pass stop")
-    h.info_signal(["USR1"])
-    # noprint implies no stop
-    h.action("SIGUSR1 noprint")
-    h.info_signal(["USR1"])
-    h.action("foo nostop")
-    # stop keyword implies print
-    h.action("SIGUSR1 stop")
-    h.info_signal(["SIGUSR1"])
-    h.action("SIGUSR1 noprint")
-    h.info_signal(["SIGUSR1"])
-    h.action("SIGUSR1 nopass stack")
-    h.info_signal(["SIGUSR1"])
-    pass
+    # dbgr = Trepan()
+    # h = SignalManager(dbgr)
+    # h.info_signal(["TRAP"])
+    # # Set to known value
+    # h.action("SIGUSR1")
+    # h.action("usr1 print pass stop")
+    # h.info_signal(["USR1"])
+    # # noprint implies no stop
+    # h.action("SIGUSR1 noprint")
+    # h.info_signal(["USR1"])
+    # h.action("foo nostop")
+    # # stop keyword implies print
+    # h.action("SIGUSR1 stop")
+    # h.info_signal(["SIGUSR1"])
+    # h.action("SIGUSR1 noprint")
+    # h.info_signal(["SIGUSR1"])
+    # h.action("SIGUSR1 nopass stack")
+    # h.info_signal(["SIGUSR1"])
+    # pass
