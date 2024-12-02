@@ -26,7 +26,7 @@ from term_background import is_dark_background
 from typing import Any
 from trepan.interfaces.user import UserInterface
 from trepan.lib.default import DEBUGGER_SETTINGS
-from trepan.lib.sighandler import SignalManager
+from pymathics.lib.sighandler import SignalManager
 from pymathics.trepan.lib.core import DebuggerCore
 
 # Default settings used here
