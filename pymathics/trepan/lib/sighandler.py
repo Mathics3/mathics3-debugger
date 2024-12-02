@@ -25,7 +25,7 @@
 #
 import signal
 
-from pymathics.trepan.lib.stack import print_expression_stack
+from pymathics.trepan.lib.stack import format_stack_entry, print_expression_stack
 from trepan.lib.sighandler import (
     fatal_signals,
     SigHandler as TrepanSignalHandler,
@@ -96,23 +96,29 @@ class SignalManager(TrepanSignalManager):
             pass
         return True
 
-    def handle_print_stack(self, signame, print_stack):
-        """Set whether we stop or not when this signal is caught.
-        If 'set_stop' is True your program will stop when this signal
-        happens."""
-        self.sigs[signame].print_stack = print_stack
-        return print_stack
-
     pass
+
 
 class SigHandler(TrepanSignalHandler):
     def handle(self, signum, frame):
         """This method is called when a signal is received."""
         core = self.dbgr.core
         if self.print_method:
-            self.print_method(f"\n(Mathics3 Trepan) Program received signal {self.signame}.")
+            self.print_method(
+                f"\n(Mathics3 Trepan) Program received signal {self.signame}."
+            )
         if self.print_stack:
-            print_expression_stack(core.processor, 100, style=self.dbgr.settings.get("style"))
+            # Print Python's most-recent frame
+            frame_lineno = (frame, frame.f_lineno)
+            self.print_method((" " * 9) +
+                format_stack_entry(
+                    self.dbgr, frame_lineno, style=self.dbgr.settings.get("style")
+                ) + "\n"
+            )
+            # Print Mathics3 backtrace frames
+            print_expression_stack(
+                core.processor, 100, style=self.dbgr.settings.get("style")
+            )
         if self.b_stop:
             old_trace_hook_suspend = core.trace_hook_suspend
             core.trace_hook_suspend = True
