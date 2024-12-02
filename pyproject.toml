@@ -5,8 +5,8 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Mathics3-debugger"
-description = "Mathics3 debugger"
+name = "Mathics3-trepan"
+description = "Mathics3 Trepan debugger"
 dependencies = [
     "Mathics3>=7.0.0.dev0",
     "trepan3k>=1.3.0",
@@ -42,4 +42,4 @@ dynamic = ["version"]
 Homepage = "https://mathics.org/"
 
 [tool.setuptools.dynamic]
-version = {attr = "pymathics.debugger.version.__version__"}
+version = {attr = "pymathics.trepan.version.__version__"}

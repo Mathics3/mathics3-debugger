@@ -7,18 +7,18 @@ Until we have some proper documentation here are some examples.
 Mathics3 Module Examples
 ------------------------
 
-To enable debugging in Mathics3, install ``mathics3-debugger``.
+To enable debugging in Mathics3, install ``mathics3-trepan``.
 Inside a mathics3 session run::
 
-  In[1]:= LoadModule["pymathics.debugger"]
-  Out[1]= "pymathics.debugger"
+  In[1]:= LoadModule["pymathics.trepan"]
+  Out[1]= "pymathics.trepan"
 
 Next, you need to active some events to trigger going into the debugger::
 
   In[2]:= DebugActivate[mpmath->True]
   Out[2]=
 
-Other events include: "Debugger", "Get", "Numpy", "SymPy", "apply", and "evalMethd".
+Other events include: "Debugger", "Get", "Numpy", "SymPy", "apply", "evalMethod", and "evaluate".
 
 In the above, ``mpmath->True`` goes into the debugger anytime a mpmath function is called.
 ``Exp[1.0]`` is such a function::
@@ -55,10 +55,10 @@ When you are done inspecting things, run ``continue`` (or short-hand ``c``) to r
 Improved TraceEvaluation
 ------------------------
 
-As before, install ``mathics3-debugger``. To set up tracing ``.evaluate()`` calls::
+As before, install ``mathics3-trepan``. To set up tracing ``.evaluate()`` calls::
 
-    In[1]:= LoadModule["pymathics.debugger"]
-    Out[1]= "pymathics.debugger"
+    In[1]:= LoadModule["pymathics.trepan"]
+    Out[1]= "pymathics.trepan"
 
     In[2]:= TraceActivate[evaluate->True]
     Out[2]=
@@ -129,7 +129,7 @@ To enter the debugger on an unrecoverable error, use the
     loaded command: "printelement"
     (Trepan3k:pm) mbt -b
     B>0 (0) Compress[expr_, OptionsPattern[Compress]]
-              called from file '/src/external-vcs/github/Mathics3/mathics-core/mathics/builtin/compress.py' at line 37
+              called from file '/tmp/Mathics3/mathics-core/mathics/builtin/compress.py' at line 37
     B>1 (36) Compress[expr_, OptionsPattern[Compress]]
-               called from file '/src/external-vcs/github/Mathics3/mathics-core/mathics/builtin/compress.py' at line 37
+               called from file '/tmp/Mathics3/mathics-core/mathics/builtin/compress.py' at line 37
     (Trepan3k:pm)
