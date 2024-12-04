@@ -133,3 +133,16 @@ To enter the debugger on an unrecoverable error, use the
     B>1 (36) Compress[expr_, OptionsPattern[Compress]]
                called from file '/tmp/Mathics3/mathics-core/mathics/builtin/compress.py' at line 37
     (Trepan3k:pm)
+
+
+Showing Tracebacks on long-running operations
+----------------------------------------------
+
+The debugger (and trepan3k) support signal handling. With this, you can set up a ``SIGINT`` handler.
+
+Here is an example:
+
+.. image:: https://github.com/Mathics3/mathics3-debugger/blob/master/screenshots/traceback-with-Ctrl-C.png
+
+
+Without the debugger, but with ``trepan3k`` installed, you can use ``Breakpoint[]``, and issue the ``handle`` command. You won't get as nice of a traceback, but it should still work.
