@@ -153,13 +153,16 @@ def format_eval_builtin_fn(frame, style: str) -> str:
     builtin_name = self_obj.__class__.__name__
 
     eval_name = frame.f_code.co_name
-    docstring = getattr(self_obj, eval_name).__doc__
-    docstring = docstring.replace("%(name)s", builtin_name)
-    args_pattern = (
-        docstring[len(builtin_name) + 1 : -1]
-        if docstring.startswith(builtin_name)
-        else ""
-    )
+    if hasattr(self_obj, eval_name):
+        docstring = getattr(self_obj, eval_name).__doc__
+        docstring = docstring.replace("%(name)s", builtin_name)
+        args_pattern = (
+            docstring[len(builtin_name) + 1 : -1]
+            if docstring.startswith(builtin_name)
+            else ""
+        )
+    else:
+        args_pattern = ""
 
     call_string = f"{builtin_name}[{args_pattern}]"
     formatted_call_string = pygments_format(call_string, style).strip()
