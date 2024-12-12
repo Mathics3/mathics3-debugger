@@ -165,7 +165,7 @@ def format_eval_builtin_fn(frame, style: str) -> str:
         args_pattern = ""
 
     call_string = f"{builtin_name}[{args_pattern}]"
-    formatted_call_string = pygments_format(call_string, style).strip()
+    formatted_call_string = pygments_format(call_string, style)
     return formatted_call_string
 
 
