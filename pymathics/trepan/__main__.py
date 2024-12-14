@@ -83,7 +83,7 @@ class DebugActivate(Builtin):
 
     messages = {
         "opttname": "mpmath name `1` is not a String",
-        "opttype": "mpmath option `1` should be a boolean or a list"
+        "opttype": "mpmath option `1` should be a boolean or a list",
     }
     options = EVENT_OPTIONS
     summary_text = """set events to go into the Mathics3 Debugger REPL"""
@@ -92,8 +92,9 @@ class DebugActivate(Builtin):
     def eval(self, evaluation: Evaluation, options: dict):
         "DebugActivate[OptionsPattern[DebugActivate]]"
 
-
-        def validate_option(option, evaluation: Evaluation) -> Tuple[Optional[list], bool]:
+        def validate_option(
+            option, evaluation: Evaluation
+        ) -> Tuple[Optional[list], bool]:
             """
             Checks that `option` is valid; it should either be a String, a Mathics3 boolean, or a List of
             Mathics3 String.
@@ -163,7 +164,9 @@ class DebugActivate(Builtin):
                     apply_builtin_fn_traced if event_is_debugged else EVALUATION_APPLY
                 )
             elif event_name == "evaluate":
-                event_filters["evaluate-entry"] = event_filters["evaluate-result"] = filters
+                event_filters["evaluate-entry"] = event_filters["evaluate-result"] = (
+                    filters
+                )
                 tracing.trace_evaluate_on_return = tracing.trace_evaluate_on_call = (
                     debug_evaluate if event_is_debugged else None
                 )
@@ -241,31 +244,38 @@ class TraceActivate(Builtin):
         "TraceActivate[OptionsPattern[TraceActivate]]"
 
         # DRY with TraceActivate
-        def validate_option(option, evaluation: Evaluation) -> Tuple[Optional[list], bool]:
+        def validate_option(
+            option, evaluation: Evaluation
+        ) -> Tuple[Optional[list], bool]:
             """
-            Checks that `option` is valid; it should either be a String, a Mathics3 boolean, or a List of
-            Mathics3 String.
+            Checks that `option` is valid; it should either be a
+            String, a Mathics3 boolean, or a List of Mathics3 String.
 
-            The return is a tuple of the filter expression and a boolean indicating wither `option` was
-            valid. Recall that a filter of None means don't filter at all - except anything.
+            The return is a tuple of the filter expression and a
+            boolean indicating whether `option` was valid. Recall that
+            a filter of None means don't filter at all - except
+            anything.
+
             """
             if isinstance(option, ListExpression):
                 filters = []
                 for elt in option.elements:
-                    # TODO: accept a Symbol look up for {mpmath, SymPy, Numpy} name-ness
+                    # TODO: accept a Symbol look up for {mpmath,
+                    # SymPy, Numpy} name-ness
                     if not isinstance(elt, String):
                         evaluation.message("DebugActivate", "opttname", option)
                         return None, False
-                    # TODO: check that string is a valid {mpmath, SymPy, Numpy} name.
+                    # TODO: check that string is a valid {mpmath,
+                    # SymPy, Numpy} name.
                     filters.append(elt.value)
                 return filters, True
             elif option in (SymbolTrue, SymbolFalse):
                 return (None, True)
             elif isinstance(option, String):
-                # TODO: check that string is a valid {mpmath, SymPy, NumPy} name
+                # TODO: check that string is a valid {mpmath, SymPy,
+                # NumPy} name
                 return ([option.value], True)
             else:
-                print("FOO")
                 evaluation.message("DebugActivate", "opttype", option)
                 return None, False
 
@@ -303,7 +313,7 @@ class TraceActivate(Builtin):
             elif event_name == "evaluate":
                 event_filters["evaluate"] = filters
                 tracing.trace_evaluate_on_return = tracing.trace_evaluate_on_call = (
-                   trace_evaluate if event_is_traced else None
+                    trace_evaluate if event_is_traced else None
                 )
             elif event_name == "evalMethod":
                 event_filters["evalMethod"] = filters

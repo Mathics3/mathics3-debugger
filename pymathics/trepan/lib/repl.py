@@ -46,6 +46,7 @@ except ImportError:
 
 debugger_obj = None
 
+
 class DebugREPL:
     """
     Class for a Debugger REPL.
@@ -66,12 +67,12 @@ class DebugREPL:
             "Get",  # Get[]
             "SymPy",  # SymPy call
             "apply",  # Builtin function call
-            "evaluate-entry", # before evaluate()
-            "evaluate-result", # after evaluate()
-            "evalMethod", # calling a built-in evaluation method Class.eval_xxx()
+            "evaluate-entry",  # before evaluate()
+            "evaluate-result",  # after evaluate()
+            "evalMethod",  # calling a built-in evaluation method Class.eval_xxx()
             "debugger",  # explicit call via "Debugger"
             "mpmath",  # mpmath call
-            }
+        }
         self.settings["style"] = default_style
 
         def get_option(key: str) -> Any:
@@ -92,9 +93,7 @@ class DebugREPL:
             "debugger_name": "Mathics3 Debug",
         }
 
-        interface = UserInterface(
-            inp=None, opts=interface_opts
-        )
+        interface = UserInterface(inp=None, opts=interface_opts)
         self.intf = [interface]
 
         self.core = DebuggerCore(self, {})
@@ -132,7 +131,6 @@ class DebugREPL:
             return results[state]
         return
 
-
     pass
 
 
@@ -141,6 +139,7 @@ if __name__ == "__main__":
     d = DebugREPL()
     print(d.settings)
     import inspect
+
     current_frame = inspect.currentframe()
     d.core.trace_dispatch(current_frame, "debugger", [])
     pass

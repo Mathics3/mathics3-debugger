@@ -7,7 +7,13 @@ from typing import Callable
 import mathics.eval.tracing as eval_tracing
 from mathics.core.evaluation import Evaluation
 from mathics.core.rules import FunctionApplyRule
-from mathics.core.symbols import Symbol, SymbolConstant, strip_context
+from mathics.core.symbols import (
+    Symbol,
+    SymbolConstant,
+    SymbolTrue,
+    SymbolFalse,
+    strip_context,
+)
 from trepan.debugger import Trepan
 
 from pymathics.trepan.lib.format import format_element, pygments_format
@@ -304,7 +310,12 @@ def pre_evaluation_debugger_hook(query, evaluation: Evaluation):
     return
 
 
-def trace_evaluate(expr, evaluation, status: str, orig_expr=None):
+# We use this to track whether to check if there is
+# a new message logged when performing Evaluate() tracing.
+message_count: int = 0
+
+
+def trace_evaluate(expr, evaluation, status: str, fn: Callable, orig_expr=None):
     """
     Print what's up with an evaluation. In contrast to debug_evaluate,
     we don't stop execution and go into a debugger.
@@ -312,11 +323,21 @@ def trace_evaluate(expr, evaluation, status: str, orig_expr=None):
     Called from a decorated Python @trace_evaluate .evaluate()
     method when TraceActivate["evaluate" -> True]
     """
+
     if evaluation.definitions.timing_trace_evaluation:
         evaluation.print_out(time.time() - evaluation.start_time)
 
+    global dbg
+    if dbg is None:
+        from pymathics.trepan.lib.repl import DebugREPL
+
+        dbg = DebugREPL()
+
+    msg = dbg.core.processor.msg
+    style = dbg.settings["style"]
+
     # Test and dispose of various situations where showing information
-    # is pretty useless: evaluationg a Symbol is the Symbol.
+    # is pretty useless: evaluating a Symbol is the Symbol.
     # Showing the return value of a ListExpression literal is
     # also useless.
     if isinstance(expr, Symbol) and not isinstance(expr, SymbolConstant):
@@ -331,25 +352,37 @@ def trace_evaluate(expr, evaluation, status: str, orig_expr=None):
     ):
         return
 
-    global dbg
-    if dbg is None:
-        from pymathics.trepan.lib.repl import DebugREPL
+    if orig_expr == expr:
+        # If the two expressions are the same, there is no point in
+        # repeating the output.
+        return
 
-        dbg = DebugREPL()
-
-    style = dbg.settings["style"]
-    formatted_expr = format_element(expr)
-    msg = dbg.core.processor.msg
     indents = "  " * evaluation.recursion_depth
 
-    if orig_expr == expr:
-        # If the two expressions are the same, there is no point in repeating the
-        # output.
-        return
     if orig_expr is not None:
         formatted_orig_expr = format_element(orig_expr)
-        msg(
-            f"{indents}{status}: {pygments_format(formatted_orig_expr + ' = ' + formatted_expr, style)}"
-        )
-    else:
+        if fn.__name__ == "rewrite_apply_eval_step":
+            if orig_expr != expr[0]:
+                if status == "Returning":
+                    if expr[1]:
+                        status = "Rewriting"
+                        arrow = " -> "
+                    else:
+                        return
+                else:
+                    arrow = " = "
+                formatted_expr = format_element(expr[0])
+                msg(
+                    f"{indents}{status}: " +
+                    pygments_format(formatted_orig_expr +
+                                    arrow + formatted_expr, style)
+                )
+        else:
+            formatted_expr = format_element(expr)
+            msg(
+                f"{indents}{status}: "
+                f"{pygments_format(formatted_orig_expr + ' = ' + formatted_expr, style)}"
+                )
+    elif fn.__name__ != "rewrite_apply_eval_step":
+        formatted_expr = format_element(expr)
         msg(f"{indents}{status}: {pygments_format(formatted_expr, style)}")
