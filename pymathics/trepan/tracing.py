@@ -373,16 +373,18 @@ def trace_evaluate(expr, evaluation, status: str, fn: Callable, orig_expr=None):
                     arrow = " = "
                 formatted_expr = format_element(expr[0])
                 msg(
-                    f"{indents}{status}: " +
-                    pygments_format(formatted_orig_expr +
-                                    arrow + formatted_expr, style)
+                    f"{indents}{status}: "
+                    + pygments_format(
+                        formatted_orig_expr + arrow + formatted_expr, style
+                    )
                 )
         else:
             formatted_expr = format_element(expr)
+            assign_str = f"{formatted_orig_expr}  = {formatted_expr}"
             msg(
                 f"{indents}{status}: "
-                f"{pygments_format(formatted_orig_expr + ' = ' + formatted_expr, style)}"
-                )
-    elif fn.__name__ != "rewrite_apply_eval_step":
+                f"{pygments_format(assign_str, style)}"
+            )
+    elif not hasattr(fn, "__name__") or fn.__name__ != "rewrite_apply_eval_step":
         formatted_expr = format_element(expr)
         msg(f"{indents}{status}: {pygments_format(formatted_expr, style)}")
