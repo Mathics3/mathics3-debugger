@@ -18,7 +18,7 @@ Next, you need to active some events to trigger going into the debugger::
   In[2]:= DebugActivate[mpmath->True]
   Out[2]=
 
-Other events include: "Debugger", "Get", "Numpy", "SymPy", "apply", "evalMethod", and "evaluate".
+Other events include: "Debugger", "Get", "Numpy", "SymPy", "apply", "evalMethod", and "evaluation".
 
 In the above, ``mpmath->True`` goes into the debugger anytime a mpmath function is called.
 ``Exp[1.0]`` is such a function::
@@ -60,7 +60,7 @@ As before, install ``mathics3-trepan``. To set up tracing ``.evaluate()`` calls:
     In[1]:= LoadModule["pymathics.trepan"]
     Out[1]= "pymathics.trepan"
 
-    In[2]:= TraceActivate[evaluate->True]
+    In[2]:= TraceActivate[evaluation->True]
     Out[2]=
 
 In contrast to ``DebugActivate``, ``TraceActivate`` just prints or traces events.

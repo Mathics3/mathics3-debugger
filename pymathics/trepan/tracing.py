@@ -26,7 +26,7 @@ TraceEventNames = (
     "SymPy",  # traps calls to SymPy functions
     "apply",  # applying a function that is *not* a Boxing function
     "applyBox",  # applying a function that *is* a Boxing function
-    "evaluate",  # calling an evaluate() method, e.g. Expression.evaluate()
+    "evaluation",  # calling an evaluate() method, e.g. Expression.evaluate()
     "evalMethod",  # calling a built-in evaluation method Class.eval_xxx()
     "evalFunction",  # calling an evaluation  eval_Xxx() of mathics.eval
     "mpmath",  # traps calls to mpmath functions
@@ -233,7 +233,7 @@ def call_trepan3k(proc_obj):
 def debug_evaluate(self, evaluation, status: str, orig_expr=None):
     """
     Called from a decorated Python @trace_evaluate .evaluate()
-    method when DebugActivate["evaluate" -> True]
+    method when DebugActivate["evaluation" -> True]
     """
     global dbg
     if dbg is None:

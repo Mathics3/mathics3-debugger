@@ -41,7 +41,7 @@ EVENT_OPTIONS: Dict[str, str] = {
     "SymPy": "False",
     "apply": "False",
     "applyBox": "False",
-    "evaluate": "False",
+    "evaluation": "False",
     "evalMethod": "False",
     "evalFunction": "False",
     "mpmath": "False",
@@ -163,7 +163,7 @@ class DebugActivate(Builtin):
                 FunctionApplyRule.apply_function = (
                     apply_builtin_fn_traced if event_is_debugged else EVALUATION_APPLY
                 )
-            elif event_name == "evaluate":
+            elif event_name == "evaluation":
                 event_filters["evaluate-entry"] = event_filters["evaluate-result"] = (
                     filters
                 )
@@ -310,8 +310,8 @@ class TraceActivate(Builtin):
                 FunctionApplyRule.apply_function = (
                     apply_builtin_fn_print if event_is_traced else EVALUATION_APPLY
                 )
-            elif event_name == "evaluate":
-                event_filters["evaluate"] = filters
+            elif event_name == "evaluation":
+                event_filters["evaluation"] = filters
                 tracing.trace_evaluate_on_return = tracing.trace_evaluate_on_call = (
                     trace_evaluate if event_is_traced else None
                 )
