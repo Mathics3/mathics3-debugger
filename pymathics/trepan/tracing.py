@@ -10,8 +10,6 @@ from mathics.core.rules import FunctionApplyRule
 from mathics.core.symbols import (
     Symbol,
     SymbolConstant,
-    SymbolTrue,
-    SymbolFalse,
     strip_context,
 )
 from trepan.debugger import Trepan
@@ -380,7 +378,7 @@ def trace_evaluate(expr, evaluation, status: str, fn: Callable, orig_expr=None):
                 )
         else:
             formatted_expr = format_element(expr)
-            assign_str = f"{formatted_orig_expr}  = {formatted_expr}"
+            assign_str = f"{formatted_orig_expr} = {formatted_expr}"
             msg(
                 f"{indents}{status}: "
                 f"{pygments_format(assign_str, style)}"
@@ -388,3 +386,8 @@ def trace_evaluate(expr, evaluation, status: str, fn: Callable, orig_expr=None):
     elif not hasattr(fn, "__name__") or fn.__name__ != "rewrite_apply_eval_step":
         formatted_expr = format_element(expr)
         msg(f"{indents}{status}: {pygments_format(formatted_expr, style)}")
+
+
+# Smash TraceEvaluation's print routine
+original_print_evaluate = eval_tracing.print_evaluate
+eval_tracing.print_evaluate = trace_evaluate
