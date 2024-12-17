@@ -30,6 +30,15 @@ class UpCommand(DebuggerCommand):
         Move the current frame up in the stack trace (to an older frame). 0 is
         the most recent frame. If no count is given, move up 1.
 
+    **Examples:**
+
+       up       # Move one frame older
+       up 1     # Same as above
+       up B:1   # Move to the next-older builtin frame
+       up b:1   # Same as above.
+       up -b 1  # Same as above
+       up e:1   # Move to the next-newer builtin frame
+
     See also:
     ---------
 
@@ -47,6 +56,13 @@ class UpCommand(DebuggerCommand):
 
         opts, rest_args = frame_parser.parse_args(args[1:])
 
+        if rest_args[0].lower().startswith("b:"):
+            opts.builtin = True
+            rest_args[0] = rest_args[0][2:]
+        elif rest_args[0].lower().startswith("e:"):
+            opts.expression = True
+            rest_args[0] = rest_args[0][2:]
+
         frame_type = FrameType.python
         if opts.builtin:
             frame_type = FrameType.builtin
@@ -58,7 +74,7 @@ class UpCommand(DebuggerCommand):
         else:
             amount = self.proc.get_an_int(
                 rest_args[0],
-                "The 'up command requires a count. Got: %s" % rest_args[0]
+                f"The 'up command requires a count. Got: {rest_args[0]}"
                 )
 
         adjust_frame(self.proc, amount * self.signum, False,

@@ -53,16 +53,15 @@ class FrameCommand(DebuggerCommand):
 
     **Examples:**
 
-       frame     # Set current frame at the current stopping point
-       frame 0   # Same as above
-       frame 5-5 # Same as above. Note: no spaces allowed in expression 5-5
-       frame .   # Same as above. "current thread" is explicit.
-       frame . 0 # Same as above.
-       frame 1   # Move to frame 1. Same as: frame 0; up
-       frame -1  # The least-recent frame
+       frame       # Set current frame at the current stopping point
+       frame 0     # Same as above
+       frame B:0   # Go to the most recent builtin expression frame
+       frame E:0   # Go to the most frame having an expression argument
+       frame e:0   # same as above
+       frame -1    # Go to the least-recent frame
+       frame E:-1  # Go to the least-recent expression
        frame MainThread 0 # Switch to frame 0 of thread MainThread
        frame MainThread   # Same as above
-       frame -2434343 0   # Use a thread number instead of name
 
     See also:
     ---------
@@ -120,6 +119,13 @@ class FrameCommand(DebuggerCommand):
             return
 
         frame_str = "0" if len(args) == 0 else args[0]
+
+        if frame_str.lower().startswith("b:"):
+            opts.builtin = True
+            frame_str = frame_str[2:]
+        elif frame_str.lower().startswith("e:"):
+            opts.expression = True
+            frame_str = frame_str[2:]
 
         frame_num = self.proc.get_an_int(
             frame_str,

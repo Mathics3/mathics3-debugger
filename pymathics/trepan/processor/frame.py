@@ -49,40 +49,37 @@ def adjust_frame(proc_obj, count: int, is_absolute_pos: bool, frame_type: FrameT
                 return
             adjusted_pos -= count
     elif frame_type == FrameType.expression:
-        if is_absolute_pos:
-            adjusted_pos = len(proc_obj.stack) - 1
-        my_range = range(proc_obj.curindex, 0, -1) if count < 0 else range(0, proc_obj.curindex)
+        stack_len = len(proc_obj.stack)
+        my_range = range(stack_len - 1, -1, -1)
         for i in my_range:
             frame_lineno = proc_obj.stack[i]
             frame = frame_lineno[0]
             self_obj = frame.f_locals.get("self", None)
             if isinstance(self_obj, Expression):
-                count -= 1
                 if count == 0:
-                    adjusted_pos = len(proc_obj.stack) - i
+                    adjusted_pos = stack_len - i - 1
                     break
-                pass
+                count -= 1
             pass
         else:
             direction = "newest" if count < 0 else "oldest"
-            proc_obj.errmsg(f"Adjusting would put us beyond the {direction} frame.")
+            proc_obj.errmsg(f"Adjusting would put us beyond the {direction} "
+                            "frame.")
     elif frame_type == FrameType.builtin:
-        if is_absolute_pos:
-            adjusted_pos = count
         stack_len = len(proc_obj.stack)
-        my_range = range(stack_len - 1, 0, -1) if count >= 0 else range(0, proc_obj.curindex)
+        my_range = range(stack_len - 1, -1, -1)
         for i in my_range:
-            frame = proc_obj.stack[i][0]
+            frame = frame_lineno[0]
             if is_builtin_eval_fn(frame):
                 if count == 0:
                     adjusted_pos = stack_len - i - 1
                     break
                 count -= 1
-                pass
             pass
         else:
             direction = "newest" if count < 0 else "oldest"
-            proc_obj.errmsg(f"Adjusting would put us beyond the {direction} frame.")
+            proc_obj.errmsg(f"Adjusting would put us beyond the {direction} "
+                            "frame.")
             return
     else:
         adjusted_pos = count

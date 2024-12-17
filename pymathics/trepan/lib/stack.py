@@ -228,7 +228,7 @@ def print_expression_stack(proc_obj, count: int, style="none"):
             if frame is proc_obj.curframe:
                 intf.msg_nocr(format_token(Arrow, "E>", style=style))
             else:
-                intf.msg_nocr("E#")
+                intf.msg_nocr("E:")
             stack_nums = f"{j} ({i})"
             intf.msg(f"{stack_nums} {frame.f_code.co_qualname} {self_obj.__class__}")
             intf.msg(
@@ -254,7 +254,7 @@ def print_builtin_stack(proc_obj, count: int, style="none"):
             if frame is proc_obj.curframe:
                 intf.msg_nocr(format_token(Arrow, "B>", style=style))
             else:
-                intf.msg_nocr("B#")
+                intf.msg_nocr("B:")
             stack_nums = f"{j} ({i})"
             intf.msg(f"{stack_nums} {format_eval_builtin_fn(frame, style=style)}")
             intf.msg(
